@@ -1,0 +1,22 @@
+struct Position {
+    float x, y;
+};
+
+// 嵌套结构体测试
+struct Entity {
+    int id;
+    struct Position pos;
+};
+
+int main() {
+    struct Entity entities[10][5];  // 二维结构体数组
+    int i = 0, j = 0;
+    
+    // 给第一个实体赋值
+    entities[0][0].id = 1001;
+    entities[0][0].pos.x = 1.2;
+    entities[0][0].pos.y = 3.4;
+    
+    // 验证表达式的结合性：先数组访问，再结构体访问
+    return entities[i][j].id;
+}

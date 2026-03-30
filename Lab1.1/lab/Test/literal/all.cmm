@@ -1,0 +1,20 @@
+int main() {
+    // 变量定义必须在一开始 (DefList)
+    int dec = 1234;
+    int oct = 0123;          /* 八进制，表示十进制的 83 */
+    int hex = 0x1A;          /* 十六进制，表示十进制的 26 */
+    
+    float f1 = 12.43;
+    float f2 = 01.23E12;     // 科学记数法
+    float f3 = 43.e-4;
+    float f4 = .5E03;
+    
+    /* 
+       多行注释测试
+       里面的符号如 +, -, struct 都不应该被识别
+       // 单行注释嵌套在多行中
+    */
+    
+    int _valid_ID_123 = oct + hex;
+    return _valid_ID_123;
+}

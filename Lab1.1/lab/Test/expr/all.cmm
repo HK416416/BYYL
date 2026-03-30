@@ -1,0 +1,31 @@
+int max(int a, int b) {
+    if (a >= b) 
+        return a;
+    else 
+        return b;
+}
+
+int main() {
+    int flag = 1;
+    int a = 5, b = 10, c = 15;
+    int result = 0;
+    
+    // 测试复杂的四则运算与逻辑运算优先级
+    // 应该被解析为: (flag) && ((a + (b * c)) > 100)
+    if (flag && a + b * c > 100) {
+        result = max(a, b);
+    }
+    
+    // 测试悬挂 else 问题：else 应该与最近的 if(b < c) 匹配
+    if (a < b)
+        if (b < c)
+            result = 1;
+        else
+            result = -1;
+
+    while (result != 0) {
+        result = result - 1;
+    }
+    
+    return result;
+}

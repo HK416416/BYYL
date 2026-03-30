@@ -1,0 +1,5 @@
+int main() {
+  int a = 1; // I am not bigmurmur.
+  // This is return statement.
+  return 0;
+}

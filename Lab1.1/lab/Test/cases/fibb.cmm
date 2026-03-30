@@ -1,0 +1,15 @@
+int fib(int n) {
+    int result = 0;
+    if (n == 0 || n == 1) {
+        return n;
+    }
+    // 函数调用和算术减法
+    result = fib(n - 1) + fib(n - 2);
+    return result;
+}
+
+int main() {
+    int n = 10;
+    int ans = fib(n);
+    return ans;
+}

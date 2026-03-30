@@ -1,0 +1,18 @@
+int plus(int a, int b) {
+  return a + b;
+}
+
+int plus1(int a) {
+  return a + 1;
+}
+
+int return0() {
+  return 0;
+}
+
+int main() {
+  int b;
+  int a = b = 1;
+  int c = plus(a, b) + plus1(b);
+  return return0();
+}

@@ -1,0 +1,15 @@
+struct Node {
+  int a, b, c;
+};
+
+struct {
+  int s, e, l;
+} big, small;
+
+struct Node m;
+
+int main() {
+  struct Node n;
+  n.a = big.s;
+  m.b = small.l;
+}

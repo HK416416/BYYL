@@ -1,0 +1,5 @@
+int main() {
+  float a = .0123;
+  float b = 1230.;
+  float c = .;
+}

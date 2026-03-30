@@ -1,0 +1,5 @@
+int main() {
+  int a = i2f(c, 0, 9);
+  int b = f2i(a);
+  int c = i2i();
+}
