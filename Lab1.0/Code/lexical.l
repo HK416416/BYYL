@@ -1,148 +1,171 @@
-%option yylineno
-%option noyywrap
 %{
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "syntax.tab.h"
+#include "ast.h"
 
-// 列号维护
+extern int yylineno;
+extern char* yytext;
+extern YYSTYPE yylval;
+extern YYLTYPE yylloc;
+
 int yycolumn = 1;
+
 #define YY_USER_ACTION \
     yylloc.first_line = yylloc.last_line = yylineno; \
     yylloc.first_column = yycolumn; \
     yylloc.last_column = yycolumn + yyleng - 1; \
     yycolumn += yyleng;
 
-// 错误声明
-extern void print_error(char type, int line, const char* msg);
 %}
 
-/* 正则定义 */
-digit           [0-9]
-oct_digit       [0-7]
-hex_digit       [0-9a-fA-F]
-letter          [a-zA-Z_]
-whitespace      [ \t\r]
-newline         \n
+%option yylineno
+%option noyywrap
 
-/* 数字定义 */
-dec_int         [1-9]{digit}*
-oct_int         0{oct_digit}+
-hex_int         0[xX]{hex_digit}+
-int_num         {dec_int}|{oct_int}|{hex_int}
+digit       [0-9]
+letter      [a-zA-Z_]
+id          {letter}({letter}|{digit})*
+bad_id_start {digit}+{letter}({letter}|{digit})*
+decimal     (0|[1-9]{digit}*)
+octal       0[0-7]+
+hex         0[xX][0-9a-fA-F]+
+invalid_oct 0[89][0-9]*
+invalid_hex 0[xX][^0-9a-fA-F]*
 
-float_num       ({digit}*\.{digit}+)|({digit}+\.{digit}*)
-exp_float       ({float_num}|{digit}+)[eE][+-]?{digit}+
-
-/* 标识符 */
-id              {letter}({letter}|{digit})*
-
-/* 运算符优先级：长匹配优先 */
 %%
-"/*"            {
-                    // 块注释处理
-                    char c;
-                    int prev = 0;
-                    int start_line = yylineno;
-                    while ((c = input()) != 0) {
-                        if (c == '\n') {
-                            yylineno++;
-                            yycolumn = 1;
-                        }
-                        if (prev == '*' && c == '/') break;
-                        prev = c;
-                    }
-                    if (c == 0) {
-                        print_error('A', start_line, "Unclosed block comment");
-                    }
-                }
 
-"//"            {
-                    // 单行注释处理
-                    char c;
-                    while ((c = input()) != '\n' && c != 0);
-                    if (c == '\n') {
-                        yylineno++;
-                        yycolumn = 1;
-                    }
-                }
-
-"int"|"float"   { yylval.str_val = strdup(yytext); return TYPE; }
-"struct"        { return STRUCT; }
-"if"            { return IF; }
+"auto"          { return AUTO; }
+"break"         { return BREAK; }
+"case"          { return CASE; }
+"char"          { return CHAR; }
+"const"         { return CONST; }
+"continue"      { return CONTINUE; }
+"default"       { return DEFAULT; }
+"do"            { return DO; }
+"double"        { return DOUBLE; }
 "else"          { return ELSE; }
-"while"         { return WHILE; }
+"enum"          { return ENUM; }
+"extern"        { return EXTERN; }
+"float"         { return FLOAT; }
+"for"           { return FOR; }
+"goto"          { return GOTO; }
+"if"            { return IF; }
+"int"           { return INT; }
+"long"          { return LONG; }
+"register"      { return REGISTER; }
 "return"        { return RETURN; }
+"short"         { return SHORT; }
+"signed"        { return SIGNED; }
+"sizeof"        { return SIZEOF; }
+"static"        { return STATIC; }
+"struct"        { return STRUCT; }
+"switch"        { return SWITCH; }
+"typedef"       { return TYPEDEF; }
+"union"         { return UNION; }
+"unsigned"      { return UNSIGNED; }
 "void"          { return VOID; }
+"volatile"      { return VOLATILE; }
+"while"         { return WHILE; }
 
-"<="|">="|"=="|"!="|"<"|">"  { yylval.str_val = strdup(yytext); return RELOP; }
-"="             { return ASSIGNOP; }
-"&&"            { return AND; }
-"||"            { return OR; }
-"!"             { return NOT; }
+{bad_id_start}  {
+    /* Report lexical error and convert the token into an ID consisting of the
+       suffix after the leading digits so parsing can continue meaningfully. */
+    extern int has_error;
+    has_error = 1;
+    fprintf(stderr, "Error type A at Line %d: Identifier cannot start with digit '%s'.\n", yylineno, yytext);
+    /* find first non-digit in yytext */
+    const char* s = yytext;
+    int i = 0;
+    while (s[i] && s[i] >= '0' && s[i] <= '9') i++;
+    if (s[i]) {
+        char* suffix = strdup(s + i);
+        yylval.node = create_id_node(suffix, yylineno);
+        free(suffix);
+        return ID;
+    } else {
+        /* no suffix (token is all digits) — fall back to returning INT_CONST */
+        yylval.node = create_int_node(atoi(yytext), yylineno);
+        return INT_CONST;
+    }
+}
+{decimal}       {
+    yylval.node = create_int_node(atoi(yytext), yylineno);
+    return INT_CONST;
+}
+{octal}         {
+    int val;
+    sscanf(yytext, "%o", &val);
+    yylval.node = create_int_node(val, yylineno);
+    return INT_CONST;
+}
+{hex}           {
+    int val;
+    sscanf(yytext, "%x", &val);
+    yylval.node = create_int_node(val, yylineno);
+    return INT_CONST;
+}
+{invalid_oct}   {
+    fprintf(stderr, "Error type A at Line %d: Illegal octal number '%s'.\n", yylineno, yytext);
+    exit(1);
+}
+{invalid_hex}   {
+    fprintf(stderr, "Error type A at Line %d: Illegal hexadecimal number '%s'.\n", yylineno, yytext);
+    exit(1);
+}
+{digit}+"."{digit}*|{digit}*"."{digit}+ {
+    yylval.node = create_float_node(atof(yytext), yylineno);
+    return FLOAT_CONST;
+}
+{id}            {
+    yylval.node = create_id_node(yytext, yylineno);
+    return ID;
+}
+\"[^\"]*\"      {
+    char* s = strdup(yytext);
+    yylval.node = create_string_node(s, yylineno);
+    return STRING;
+}
+"//"[^\n]*      { /* 忽略单行注释 */ }
+"/*"            {
+    int c;
+    while ((c = input()) != 0) {
+        if (c == '*' && input() == '/') break;
+        if (c == '\n') yylineno++;
+    }
+    /* 未闭合注释由词法错误处理，此处简化 */
+}
 "+"             { return PLUS; }
 "-"             { return MINUS; }
 "*"             { return STAR; }
 "/"             { return DIV; }
+"%"             { return MOD; }
+"<"             { return LT; }
+"<="            { return LE; }
+">"             { return GT; }
+">="            { return GE; }
+"=="            { return EQ; }
+"!="            { return NE; }
+"&&"            { return AND; }
+"||"            { return OR; }
+"!"             { return NOT; }
+"="             { return ASSIGN; }
 "("             { return LP; }
 ")"             { return RP; }
-"{"             { return LC; }
-"}"             { return RC; }
 "["             { return LB; }
 "]"             { return RB; }
-";"             { return SEMI; }
+"{"             { return LC; }
+"}"             { return RC; }
 ","             { return COMMA; }
+";"             { return SEMI; }
 "."             { return DOT; }
-
-{int_num}       {
-                    // 整数解析：十进制/八进制/十六进制
-                    char* endptr;
-                    if (yytext[0] == '0' && (yytext[1] == 'x' || yytext[1] == 'X')) {
-                        // 十六进制
-                        yylval.int_val = strtol(yytext, &endptr, 16);
-                        if (*endptr != '\0') {
-                            char msg[128];
-                            snprintf(msg, sizeof(msg), "Illegal hexadecimal number '%s'", yytext);
-                            print_error('A', yylineno, msg);
-                        }
-                    } else if (yytext[0] == '0' && yytext[1] != '\0') {
-                        // 八进制
-                        yylval.int_val = strtol(yytext, &endptr, 8);
-                        if (*endptr != '\0') {
-                            char msg[128];
-                            snprintf(msg, sizeof(msg), "Illegal octal number '%s'", yytext);
-                            print_error('A', yylineno, msg);
-                        }
-                    } else {
-                        // 十进制
-                        yylval.int_val = atoi(yytext);
-                    }
-                    return INT;
-                }
-
-{float_num}|{exp_float} {
-                    // 浮点数解析（含指数形式）
-                    char* endptr;
-                    yylval.float_val = strtof(yytext, &endptr);
-                    if (*endptr != '\0') {
-                        char msg[128];
-                        snprintf(msg, sizeof(msg), "Illegal floating point number '%s'", yytext);
-                        print_error('A', yylineno, msg);
-                    }
-                    return FLOAT;
-                }
-
-{id}            { yylval.str_val = strdup(yytext); return ID; }
-
-{whitespace}    { /* 忽略空白符 */ }
-
-{newline}       { yycolumn = 1; /* 换行重置列号 */ }
-
+[ \t\r]+        { /* 忽略空白 */ }
+\n              { yycolumn = 1; }
 .               {
-                    // 未定义字符，错误类型A
-                    char msg[128];
-                    snprintf(msg, sizeof(msg), "Mysterious character '%s'", yytext);
-                    print_error('A', yylineno, msg);
-                }
+    extern int has_error;
+    has_error = 1;
+    fprintf(stderr, "Error type A at Line %d: Illegal character '%s'.\n", yylineno, yytext);
+    /* skip unknown character and continue scanning */
+}
+
 %%
