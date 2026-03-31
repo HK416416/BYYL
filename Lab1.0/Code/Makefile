@@ -17,13 +17,10 @@ YFC = $(shell find ./ -name "*.y" | sed s/[^/]*\\.y/syntax.tab.c/)
 LFO = $(LFC:.c=.o)
 YFO = $(YFC:.c=.o)
 
-# ------------------ 核心修复：显式指定依赖并链接 lex.yy.o ------------------
-parser: syntax lexical main.o
-	$(CC) -c $(LFC) -o $(LFO)
-	$(CC) -o parser main.o $(LFO) $(YFO) -lfl -ly
-# --------------------------------------------------------------------------------
+parser: syntax $(filter-out $(LFO),$(OBJS))
+	$(CC) -o parser $(filter-out $(LFO),$(OBJS)) -lfl -ly
 
-syntax: syntax-c
+syntax: lexical syntax-c
 	$(CC) -c $(YFC) -o $(YFO)
 
 lexical: $(LFILE)
@@ -35,15 +32,9 @@ syntax-c: $(YFILE)
 -include $(patsubst %.o, %.d, $(OBJS))
 
 # 定义的一些伪目标
-.PHONY: clean test test1 test2 test3
+.PHONY: clean test
 test:
 	./parser ../Test/test1.cmm
-test1:
-	./parser ../Test/test1.cmm
-test2:
-	./parser ../Test/test2.cmm
-test3:
-	./parser ../Test/test3.cmm
 clean:
 	rm -f parser lex.yy.c syntax.tab.c syntax.tab.h syntax.output
 	rm -f $(OBJS) $(OBJS:.o=.d)

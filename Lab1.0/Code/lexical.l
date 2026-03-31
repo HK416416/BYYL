@@ -2,11 +2,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "syntax.tab.h"
-#include "ast.h"
+
+/* Forward declarations for AST helpers implemented in main.c */
+struct Node;
+typedef struct Node Node;
+extern Node* create_id_node(const char* value, int line);
+extern Node* create_int_node(int val, int line);
+extern Node* create_float_node(float val, int line);
+extern Node* create_string_node(const char* value, int line);
+extern int has_error;
+/* strdup prototype to satisfy strict compilation modes */
+extern char* strdup(const char*);
 
 extern int yylineno;
 extern char* yytext;
+extern int fileno(FILE *stream);
 extern YYSTYPE yylval;
 extern YYLTYPE yylloc;
 
@@ -68,27 +80,6 @@ invalid_hex 0[xX][^0-9a-fA-F]*
 "volatile"      { return VOLATILE; }
 "while"         { return WHILE; }
 
-{bad_id_start}  {
-    /* Report lexical error and convert the token into an ID consisting of the
-       suffix after the leading digits so parsing can continue meaningfully. */
-    extern int has_error;
-    has_error = 1;
-    fprintf(stderr, "Error type A at Line %d: Identifier cannot start with digit '%s'.\n", yylineno, yytext);
-    /* find first non-digit in yytext */
-    const char* s = yytext;
-    int i = 0;
-    while (s[i] && s[i] >= '0' && s[i] <= '9') i++;
-    if (s[i]) {
-        char* suffix = strdup(s + i);
-        yylval.node = create_id_node(suffix, yylineno);
-        free(suffix);
-        return ID;
-    } else {
-        /* no suffix (token is all digits) — fall back to returning INT_CONST */
-        yylval.node = create_int_node(atoi(yytext), yylineno);
-        return INT_CONST;
-    }
-}
 {decimal}       {
     yylval.node = create_int_node(atoi(yytext), yylineno);
     return INT_CONST;
@@ -106,12 +97,19 @@ invalid_hex 0[xX][^0-9a-fA-F]*
     return INT_CONST;
 }
 {invalid_oct}   {
-    fprintf(stderr, "Error type A at Line %d: Illegal octal number '%s'.\n", yylineno, yytext);
-    exit(1);
+    extern int has_error;
+    has_error = 1;
+    printf("Error type A at Line %d: Illegal octal number '%s'.\n", yylineno, yytext);
+    /* Recover by returning an INT_CONST with value 0 so parser can continue */
+    yylval.node = create_int_node(0, yylineno);
+    return INT_CONST;
 }
 {invalid_hex}   {
-    fprintf(stderr, "Error type A at Line %d: Illegal hexadecimal number '%s'.\n", yylineno, yytext);
-    exit(1);
+    extern int has_error;
+    has_error = 1;
+    printf("Error type A at Line %d: Illegal hexadecimal number '%s'.\n", yylineno, yytext);
+    yylval.node = create_int_node(0, yylineno);
+    return INT_CONST;
 }
 {digit}+"."{digit}*|{digit}*"."{digit}+ {
     yylval.node = create_float_node(atof(yytext), yylineno);
@@ -121,6 +119,28 @@ invalid_hex 0[xX][^0-9a-fA-F]*
     yylval.node = create_id_node(yytext, yylineno);
     return ID;
 }
+{bad_id_start}  {
+    /* Report lexical error and convert the token into an ID consisting of the
+       suffix after the leading digits so parsing can continue meaningfully. */
+    extern int has_error;
+    has_error = 1;
+    printf("Error type A at Line %d: Identifier cannot start with digit '%s'.\n", yylineno, yytext);
+    /* find first non-digit in yytext */
+    const char* s = yytext;
+    int i = 0;
+    while (s[i] && s[i] >= '0' && s[i] <= '9') i++;
+    if (s[i]) {
+        char* suffix = strdup(s + i);
+        yylval.node = create_id_node(suffix, yylineno);
+        free(suffix);
+        return ID;
+    } else {
+        /* no suffix (token is all digits) — fall back to returning INT_CONST */
+        yylval.node = create_int_node(atoi(yytext), yylineno);
+        return INT_CONST;
+    }
+}
+
 \"[^\"]*\"      {
     char* s = strdup(yytext);
     yylval.node = create_string_node(s, yylineno);
@@ -149,7 +169,7 @@ invalid_hex 0[xX][^0-9a-fA-F]*
 "&&"            { return AND; }
 "||"            { return OR; }
 "!"             { return NOT; }
-"="             { return ASSIGN; }
+"="             { return ASSIGNOP; }
 "("             { return LP; }
 ")"             { return RP; }
 "["             { return LB; }
@@ -164,7 +184,7 @@ invalid_hex 0[xX][^0-9a-fA-F]*
 .               {
     extern int has_error;
     has_error = 1;
-    fprintf(stderr, "Error type A at Line %d: Illegal character '%s'.\n", yylineno, yytext);
+    printf("Error type A at Line %d: Illegal character '%s'.\n", yylineno, yytext);
     /* skip unknown character and continue scanning */
 }
 

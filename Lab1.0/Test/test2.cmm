@@ -1,18 +1,9 @@
-int main() {
-    // 1. 词法错误：标识符不能以数字开头
-    int 1bad_var = 10;  
-    
-    // 2. 语法错误：缺少分号
-    int missing_semi = 20 
-    
-    // 3. 语法错误：缺少右括号
-    if (missing_semi > 10 {
-        missing_semi = missing_semi + 1;
-    }
-    
-    // 4. 语法错误：变量定义 Def 出现在了语句 Stmt 之后（C-- 严格禁止）
-    missing_semi = 5;
-    int late_def = 6; 
-    
-    return 0;
+struct Complex
+{
+float real, image;
+};
+int main()
+{
+struct Complex x;
+y.image = 3.5;
 }
