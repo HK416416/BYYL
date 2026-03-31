@@ -3,7 +3,6 @@
 #include <string.h>
 #include <stdarg.h>
 
-/* strdup prototype to satisfy strict compilation modes */
 extern char* strdup(const char*);
 
 /* AST 类型与实现（从原 ast.h/语法文件中移动到这里） */
@@ -131,11 +130,7 @@ void free_node(Node* node) {
 extern int yyparse();
 extern FILE* yyin;
 
-/* If the build system does not separately compile/link the lexer, include
- * the generated lexer source here so the real scanner is present in the
- * final binary. If the build does compile lex.yy.c separately this may
- * cause duplicate-symbols; in that case the platform should avoid
- * compiling lex.yy.c separately. */
+
 #include "lex.yy.c"
 
 int main(int argc, char** argv) {
