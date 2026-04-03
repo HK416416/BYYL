@@ -16,12 +16,12 @@ Lab1 — 词法与语法分析器（C-- 子集）
 
 快速使用
 ----
-在 `Lab1.0/Code` 下执行：
+在 `../Code` 下执行：
 
 ```bash
-cd Lab1.0/Code
+cd ../Code
 make        # 生成 lex.yy.c, syntax.tab.c 并编译为可执行 parser
-./parser ../Test/m4_test.cmm   # 运行示例
+./parser <input.cmm>   # 运行示例
 ```
 
 输出说明
