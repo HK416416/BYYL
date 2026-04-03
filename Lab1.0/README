@@ -1,32 +1,37 @@
-文件结构：
-	/Lab
-	    /Code
-		Makefile
-		lexical.l
-		syntax.y
-		main.c
-		  .
-		  .
-	    /Test
-		test1.cmm
-		test2.cmm
-		  .
-		  .
-	    /report.pdf
-	    /parser
-	    /README
+Lab1 — 词法与语法分析器（C-- 子集）
 
-Code目录：	1. 用于存放所有flex，bison，C语言源文件和头文件以及Makefile；
-		2. 该目录下有一个Makefile文件，请使用它。除了定义和修改一些伪目标外不可对文件做其它修改（否则助教测试失败必扣分）；
-		3. 请勿在该目录下创建子目录（如include、src等），实验的代码量还没有复杂到需要将头文件以及源文件分开管理的程度；
-		4. 避免不合理的文件include关系，比如一个C文件include另一个C文件，Makefile执行时会报错。
-	
-Test目录：	1. 用于存放测试文件以及输出文件（如果有输出文件的话）；
-		2. 请将测试文件以".cmm"作为后缀名。
+简介
+----
+本目录实现了一个基于 Flex/Bison 的简化 C-like 语言前端（词法分析、语法分析、AST 输出与错误报告），用于课程实验 1.0。主要代码位于 `Code/`，测试用例位于 `Test/`，实验报告在 `report.md`。
 
-report.pdf：	1. 该文件为你所需提交的实验报告，请自行完成后替换该文件。请在实验报告里写明姓名，学号和联系邮箱。
-		（如果是组队提交的，只需一份实验报告）
+目录结构
+----
+- Code/: 源代码和 Makefile
+	- `lexical.l` — Flex 词法文件
+	- `syntax.y` — Bison 语法与语义动作
+	- `main.c` — AST 实现与程序入口
+	- `Makefile` — 本地构建脚本（直接调用 flex/bison/gcc）
+- Test/: 示例输入文件（.cmm）
+- report.md: 实验报告（实现方法、遇到的问题与测试说明）
 
-parser：	1. 用你编译生成的二进制文件替换该文件。
+快速使用
+----
+在 `Lab1.0/Code` 下执行：
 
-README：	1. 你正打开着的...
+```bash
+cd Lab1.0/Code
+make        # 生成 lex.yy.c, syntax.tab.c 并编译为可执行 parser
+./parser ../Test/m4_test.cmm   # 运行示例
+```
+
+输出说明
+----
+- 正常情况下，程序在 stdout 打印 AST（前序遍历，两个空格缩进）。
+- 词法/语法错误按评分要求输出到 stdout，格式示例：
+	- `Error type A at Line N: ...`（词法错误）
+	- `Error type B at Line N: ...`（语法错误）
+- 若发生任意错误，程序不会打印 AST（由全局 `has_error` 控制）.
+
+
+
+

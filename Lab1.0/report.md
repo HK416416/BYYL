@@ -64,7 +64,7 @@ Error type B at Line %d: Missing "]".
 
 示例构建与运行命令：
 ```bash
-cd Lab1.0/Code
+cd ../Code
 make
 ./parser <input.cmm>
 ```
