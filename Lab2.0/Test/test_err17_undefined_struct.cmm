@@ -1,0 +1,4 @@
+int main() {
+  struct U u; /* using undefined struct — should trigger (17) */
+  return 0;
+}

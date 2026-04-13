@@ -1,0 +1,4 @@
+int main() {
+  1 = 2;  /* literal on left — should trigger non-lvalue (6) */
+  return 0;
+}

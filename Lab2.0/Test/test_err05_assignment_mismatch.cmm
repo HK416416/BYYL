@@ -1,0 +1,6 @@
+int main() {
+  int a;
+  float b;
+  a = b;  /* should trigger type mismatch (5) */
+  return 0;
+}

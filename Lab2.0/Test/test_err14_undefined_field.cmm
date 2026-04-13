@@ -1,0 +1,7 @@
+struct S { int a; };
+
+int main() {
+  struct S s;
+  s.b = 1; /* undefined field — should trigger (14) */
+  return 0;
+}

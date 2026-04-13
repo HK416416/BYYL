@@ -1,0 +1,5 @@
+int main() {
+  int a;
+  a.x; /* non-structure using . — should trigger (13) */
+  return 0;
+}

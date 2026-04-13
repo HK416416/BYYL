@@ -1,0 +1,4 @@
+struct S { int a; };
+struct S { int b; }; /* duplicated struct name — should trigger (16) */
+
+int main() { return 0; }

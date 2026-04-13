@@ -1,0 +1,5 @@
+int main() {
+  int a;
+  a[1]; /* non-array used with [] — should trigger (10) */
+  return 0;
+}

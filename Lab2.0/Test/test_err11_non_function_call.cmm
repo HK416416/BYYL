@@ -1,0 +1,5 @@
+int main() {
+  int a;
+  a(); /* non-function used with () — should trigger (11) */
+  return 0;
+}

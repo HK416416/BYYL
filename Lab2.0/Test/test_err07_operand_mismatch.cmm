@@ -1,0 +1,7 @@
+int main() {
+  int a;
+  struct S { int x; } s;
+  /* attempt invalid operation between int and struct — may trigger operand mismatch (7) if supported */
+  a = a + s;
+  return 0;
+}

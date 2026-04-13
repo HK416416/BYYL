@@ -1,0 +1,6 @@
+int f(int x) { return 0; }
+
+int main() {
+  f(1, 2); /* wrong number of args — should trigger (9) */
+  return 0;
+}

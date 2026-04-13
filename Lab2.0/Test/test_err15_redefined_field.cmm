@@ -1,0 +1,6 @@
+struct S {
+  int a;
+  int a; /* duplicated field — should trigger (15) */
+};
+
+int main() { return 0; }
