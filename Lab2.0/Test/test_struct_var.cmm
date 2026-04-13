@@ -1,0 +1,1 @@
+struct A { int x; float y; }; int main() { struct A a; return 0; }
