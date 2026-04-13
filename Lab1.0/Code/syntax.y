@@ -95,7 +95,7 @@ ExtDef          : Specifier ExtDecList SEMI  { $$ = create_node("ExtDef", @$.fir
                 | error SEMI                 { yyerrok; $$ = NULL; }
                 ;
 
-ExtDecList      : VarDec                     { $$ = $1; }
+ExtDecList      : VarDec                     { $$ = create_node("ExtDecList", @1.first_line, 1, $1); }
                 | VarDec COMMA ExtDecList    { $$ = create_node("ExtDecList", @$.first_line, 3, $1, create_terminal_node("COMMA", @2.first_line), $3); }
                 ;
 
@@ -124,7 +124,7 @@ FunDec          : ID LP VarList RP           { $$ = create_node("FunDec", @$.fir
                 ;
 
 VarList         : ParamDec COMMA VarList     { $$ = create_node("VarList", @$.first_line, 3, $1, create_terminal_node("COMMA", @2.first_line), $3); }
-                | ParamDec                   { $$ = $1; }
+                | ParamDec                   { $$ = create_node("VarList", @1.first_line, 1, $1); }
                 ;
 
 ParamDec        : Specifier VarDec           { $$ = create_node("ParamDec", @$.first_line, 2, $1, $2); }
@@ -143,7 +143,7 @@ Stmt            : MatchedStmt
                 ;
 
 MatchedStmt     : Exp SEMI                   { $$ = create_node("Stmt", @$.first_line, 2, $1, create_terminal_node("SEMI", @2.first_line)); }
-                | CompSt                     { $$ = $1; }
+                | CompSt                     { $$ = create_node("Stmt", @$.first_line, 1, $1); }
                 | RETURN Exp SEMI            { $$ = create_node("Stmt", @$.first_line, 3, create_terminal_node("RETURN", @1.first_line), $2, create_terminal_node("SEMI", @3.first_line)); }
                 | WHILE LP Exp RP MatchedStmt       { $$ = create_node("Stmt", @$.first_line, 5, create_terminal_node("WHILE", @1.first_line), create_terminal_node("LP", @2.first_line), $3, create_terminal_node("RP", @4.first_line), $5); }
                 | IF LP Exp RP MatchedStmt ELSE MatchedStmt { $$ = create_node("Stmt", @$.first_line, 7, create_terminal_node("IF", @1.first_line), create_terminal_node("LP", @2.first_line), $3, create_terminal_node("RP", @4.first_line), $5, create_terminal_node("ELSE", @6.first_line), $7); }
@@ -174,12 +174,12 @@ Dec             : VarDec                     { $$ = create_node("Dec", @$.first_
 Exp             : Exp ASSIGNOP Exp             { $$ = create_node("Exp", @$.first_line, 3, $1, create_terminal_node("ASSIGNOP", @2.first_line), $3); }
                 | Exp AND Exp                { $$ = create_node("Exp", @$.first_line, 3, $1, create_terminal_node("AND", @2.first_line), $3); }
                 | Exp OR Exp                 { $$ = create_node("Exp", @$.first_line, 3, $1, create_terminal_node("OR", @2.first_line), $3); }
-                | Exp LT Exp                 { $$ = create_node("Exp", @$.first_line, 3, $1, create_terminal_node("LT", @2.first_line), $3); }
-                | Exp LE Exp                 { $$ = create_node("Exp", @$.first_line, 3, $1, create_terminal_node("LE", @2.first_line), $3); }
-                | Exp GT Exp                 { $$ = create_node("Exp", @$.first_line, 3, $1, create_terminal_node("GT", @2.first_line), $3); }
-                | Exp GE Exp                 { $$ = create_node("Exp", @$.first_line, 3, $1, create_terminal_node("GE", @2.first_line), $3); }
-                | Exp EQ Exp                 { $$ = create_node("Exp", @$.first_line, 3, $1, create_terminal_node("EQ", @2.first_line), $3); }
-                | Exp NE Exp                 { $$ = create_node("Exp", @$.first_line, 3, $1, create_terminal_node("NE", @2.first_line), $3); }
+                | Exp LT Exp                 { $$ = create_node("Exp", @$.first_line, 3, $1, create_terminal_node("RELOP", @2.first_line), $3); }
+                | Exp LE Exp                 { $$ = create_node("Exp", @$.first_line, 3, $1, create_terminal_node("RELOP", @2.first_line), $3); }
+                | Exp GT Exp                 { $$ = create_node("Exp", @$.first_line, 3, $1, create_terminal_node("RELOP", @2.first_line), $3); }
+                | Exp GE Exp                 { $$ = create_node("Exp", @$.first_line, 3, $1, create_terminal_node("RELOP", @2.first_line), $3); }
+                | Exp EQ Exp                 { $$ = create_node("Exp", @$.first_line, 3, $1, create_terminal_node("RELOP", @2.first_line), $3); }
+                | Exp NE Exp                 { $$ = create_node("Exp", @$.first_line, 3, $1, create_terminal_node("RELOP", @2.first_line), $3); }
                 | Exp PLUS Exp               { $$ = create_node("Exp", @$.first_line, 3, $1, create_terminal_node("PLUS", @2.first_line), $3); }
                 | Exp MINUS Exp              { $$ = create_node("Exp", @$.first_line, 3, $1, create_terminal_node("MINUS", @2.first_line), $3); }
                 | Exp STAR Exp               { $$ = create_node("Exp", @$.first_line, 3, $1, create_terminal_node("STAR", @2.first_line), $3); }
@@ -200,7 +200,7 @@ Exp             : Exp ASSIGNOP Exp             { $$ = create_node("Exp", @$.firs
                 ;
 
 Args            : Exp COMMA Args             { $$ = create_node("Args", @$.first_line, 3, $1, create_terminal_node("COMMA", @2.first_line), $3); }
-                | Exp                        { $$ = $1; }
+                | Exp                        { $$ = create_node("Args", @1.first_line, 1, $1); }
                 ;
 
 %%

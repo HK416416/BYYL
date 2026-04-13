@@ -1,0 +1,68 @@
+Test run summary
+=================
+A-1.cmm: FAIL
+  Differences (line#, actual, expected)
+    2: 'Error type B at Line 3'  !=  '<no line>'
+    3: 'Error type B at Line 4'  !=  '<no line>'
+    4: 'Error type B at Line 5'  !=  '<no line>'
+A-10.cmm: PASS
+A-2.cmm: PASS
+A-3.cmm: PASS
+A-4.cmm: PASS
+A-5.cmm: FAIL
+  Differences (line#, actual, expected)
+    1: 'Error type B at Line 2'  !=  'Error type A at Line 2'
+    2: 'Error type B at Line 3'  !=  '<no line>'
+    3: 'Error type B at Line 4'  !=  '<no line>'
+A-6.cmm: FAIL
+  Differences (line#, actual, expected)
+    2: 'Error type B at Line 5'  !=  '<no line>'
+    3: 'Error type B at Line 6'  !=  '<no line>'
+A-7.cmm: FAIL
+  Differences (line#, actual, expected)
+    2: 'Error type B at Line 7'  !=  '<no line>'
+    3: 'Error type B at Line 8'  !=  '<no line>'
+A-8.cmm: PASS
+A-9.cmm: PASS
+B-1.cmm: FAIL
+  Differences (line#, actual, expected)
+    4: 'Error type B at Line 13'  !=  'Error type B at Line 14'
+    5: 'Error type B at Line 14'  !=  'Error type B at Line 20'
+    6: 'Error type B at Line 16'  !=  '<no line>'
+    7: 'Error type B at Line 17'  !=  '<no line>'
+    8: 'Error type B at Line 18'  !=  '<no line>'
+    9: 'Error type B at Line 20'  !=  '<no line>'
+    10: 'Error type B at Line 22'  !=  '<no line>'
+    11: 'Error type B at Line 24'  !=  '<no line>'
+B-2.cmm: PASS
+C-1.cmm: PASS
+C-2.cmm: PASS
+D-1.cmm: PASS
+D-2.cmm: FAIL
+  Differences (line#, actual, expected)
+    1: 'Error type B at Line 2'  !=  'Program (1)'
+    2: 'Error type B at Line 3'  !=  'ExtDefList (1)'
+    3: 'Error type B at Line 4'  !=  'ExtDef (1)'
+    4: 'Error type B at Line 5'  !=  'Specifier (1)'
+    5: 'Error type B at Line 6'  !=  'TYPE'
+    6: 'Error type B at Line 7'  !=  'FunDec (1)'
+    7: '<no line>'  !=  'ID'
+    8: '<no line>'  !=  'LP'
+D-3.cmm: PASS
+E1-1.cmm: PASS
+E1-2.cmm: ERROR expect file missing: E1-2.exp
+E2-1.cmm: FAIL
+  Differences (line#, actual, expected)
+    1: 'Error type B at Line 2'  !=  'Program (1)'
+    2: 'Error type B at Line 3'  !=  'ExtDefList (1)'
+    3: 'Error type B at Line 4'  !=  'ExtDef (1)'
+    4: 'Error type B at Line 5'  !=  'Specifier (1)'
+    5: 'Error type B at Line 7'  !=  'TYPE'
+    6: 'Error type B at Line 8'  !=  'FunDec (1)'
+    7: 'Error type B at Line 9'  !=  'ID'
+    8: '<no line>'  !=  'LP'
+E2-2.cmm: ERROR expect file missing: E2-2.exp
+E3-1.cmm: PASS
+E3-2.cmm: ERROR expect file missing: E3-2.exp
+
+Total: 23, Passed: 13, Failed: 7, Error: 3

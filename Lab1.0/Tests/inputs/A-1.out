@@ -1,0 +1,4 @@
+Error type A at Line 3: Illegal character '$'.
+Error type B at Line 3: syntax error, unexpected INT_CONST, expecting SEMI.
+Error type B at Line 4: syntax error, unexpected RETURN, expecting end of file or FLOAT or INT or STRUCT.
+Error type B at Line 5: syntax error, unexpected RC, expecting end of file or FLOAT or INT or STRUCT.

@@ -1,0 +1,13 @@
+Error type B at Line 7: syntax error, unexpected FLOAT_CONST, expecting INT_CONST.
+Error type B at Line 11: syntax error, unexpected RP, expecting FLOAT or INT or STRUCT.
+Error type B at Line 12: syntax error, unexpected RC, expecting end of file or FLOAT or INT or STRUCT.
+Error type B at Line 13: syntax error, unexpected ASSIGNOP, expecting SEMI.
+Error type B at Line 14: syntax error, unexpected ASSIGNOP, expecting SEMI.
+Error type B at Line 16: syntax error, unexpected ID, expecting end of file or FLOAT or INT or STRUCT.
+Error type B at Line 17: syntax error, unexpected ID, expecting end of file or FLOAT or INT or STRUCT.
+Error type B at Line 18: syntax error, unexpected ID, expecting end of file or FLOAT or INT or STRUCT.
+Error type B at Line 20: syntax error, unexpected WHILE, expecting end of file or FLOAT or INT or STRUCT.
+Error type B at Line 22: syntax error, unexpected WHILE, expecting end of file or FLOAT or INT or STRUCT.
+Error type B at Line 24: syntax error, unexpected ID, expecting end of file or FLOAT or INT or STRUCT.
+Error type B at Line 25: syntax error, unexpected RC, expecting end of file or FLOAT or INT or STRUCT.
+Error type B at Line 28: syntax error, unexpected RC, expecting end of file or FLOAT or INT or STRUCT.
