@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* strdup在C99中不是标准函数，需要声明 */
 extern char* strdup(const char*);
 
 /* 创建基本类型 */

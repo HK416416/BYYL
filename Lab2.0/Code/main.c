@@ -158,7 +158,7 @@ int main(int argc, char** argv) {
         if (!has_error) {
             print_tree(root, 0);
         }
-        
+        //print_tree(root, 0);
         free_node(root);
     }
     fclose(f);

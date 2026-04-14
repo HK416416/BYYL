@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdarg.h>
 
-/* 包含Node结构定义（从main.c复制） */
+
 typedef struct Node {
     char* name;
     int line;
@@ -695,24 +695,24 @@ ExpTypeInfo analyze_exp(SemanticContext* context, Node* node) {
     
     Node* first_child = get_child(node, 0);
     
-    // 处理赋值表达式: Exp ASSIGNOP Exp
+    // 处理二元形式（可能是赋值或其它二元运算）: Exp OP Exp
     if (num_children == 3 && is_node_name(first_child, "Exp")) {
         Node* op_node = get_child(node, 1);
         Node* right_exp = get_child(node, 2);
-        
+
         if (op_node != NULL && is_node_name(op_node, "ASSIGNOP")) {
-            // 分析左表达式
+            // 赋值表达式
             ExpTypeInfo left_info = analyze_exp(context, first_child);
-            
+
             // 检查左值
             if (!left_info.is_lvalue) {
                 report_semantic_error(context, ERROR_NON_LVALUE_ASSIGNMENT,
                                     info.line, "The left-hand side of an assignment must be a variable");
             }
-            
+
             // 分析右表达式
             ExpTypeInfo right_info = analyze_exp(context, right_exp);
-            
+
             // 检查类型兼容性
             if (left_info.type != NULL && right_info.type != NULL) {
                 if (!is_type_compatible(left_info.type, right_info.type)) {
@@ -720,10 +720,41 @@ ExpTypeInfo analyze_exp(SemanticContext* context, Node* node) {
                                         info.line, "Type mismatched for assignment");
                 }
             }
-            
+
             // 赋值表达式的结果类型是左表达式的类型
             info.type = copy_type(left_info.type);
             info.is_lvalue = 0;  // 赋值表达式本身不是左值
+        }
+        else if (op_node != NULL && op_node->is_terminal) {
+            // 其它二元操作符：算术/关系/逻辑等
+            const char* op_name = op_node->name;
+            if (strcmp(op_name, "PLUS") == 0 || strcmp(op_name, "MINUS") == 0 ||
+                strcmp(op_name, "STAR") == 0 || strcmp(op_name, "DIV") == 0 ||
+                strcmp(op_name, "MOD") == 0 ||
+                strcmp(op_name, "LT") == 0 || strcmp(op_name, "LE") == 0 ||
+                strcmp(op_name, "GT") == 0 || strcmp(op_name, "GE") == 0 ||
+                strcmp(op_name, "EQ") == 0 || strcmp(op_name, "NE") == 0 ||
+                strcmp(op_name, "AND") == 0 || strcmp(op_name, "OR") == 0) {
+
+                // 分析左表达式
+                ExpTypeInfo left_info = analyze_exp(context, first_child);
+                // 分析右表达式
+                ExpTypeInfo right_info = analyze_exp(context, right_exp);
+
+                // 检查类型兼容性
+                if (left_info.type != NULL && right_info.type != NULL) {
+                    if (!is_type_compatible(left_info.type, right_info.type)) {
+                        report_semantic_error(context, ERROR_TYPE_MISMATCH_OPERANDS,
+                                            info.line, "Type mismatched for operands");
+                    }
+                }
+
+                // 设置结果类型（简化：使用左操作数的类型）
+                if (left_info.type != NULL) {
+                    info.type = copy_type(left_info.type);
+                }
+                info.is_lvalue = 0;  // 二元表达式不是左值
+            }
         }
     }
     // 处理ID节点
@@ -732,8 +763,8 @@ ExpTypeInfo analyze_exp(SemanticContext* context, Node* node) {
         if (id_name != NULL) {
             Symbol* symbol = find_symbol(context->global_table, id_name);
             if (symbol == NULL) {
-                report_semantic_error(context, ERROR_UNDEFINED_VARIABLE,
-                                    info.line, "Undefined variable \"%s\"", id_name);
+                report_semantic_error(context, ERROR_UNDEFINED_VARIABLE,info.line, "Undefined variable \"%s\"", id_name);
+                info.is_lvalue = 1;
             } else if (symbol->kind == SYMBOL_VARIABLE) {
                 info.type = copy_type(symbol->u.variable.type);
                 info.is_lvalue = 1;

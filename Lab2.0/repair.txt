@@ -1,0 +1,26 @@
+1.2026年4月14日19:58
+对于 Lab2.0/Test/test_err01_undefine.cmm 会报（第二个多了）
+hk416@hk416-virtual-machine:~/Downloads/BianYiYuanLi/Lab2.0/Test$ ./parser test_err01_undefine.cmm 
+Error type 1 at Line 4: Undefined variable "j".
+Error type 6 at Line 4: The left-hand side of an assignment must be a variable.
+
+修复方式：   report_semantic_error(context, ERROR_UNDEFINED_VARIABLE,info.line, "Undefined variable \"%s\"", id_name);
+            之后添加：info.is_lvalue = 1;
+
+2.2026年4月14日20:09
+对于右值未定义，报错缺失
+int main()
+{
+    int i = 0;
+    i = k + 1;  
+}
+    在 semantic.c 的 analyze_exp 中，原先处理二元表达式的逻辑被一个与赋值判断相同的 if/else-if 
+条件覆盖，导致当 AST 节点形式为 Exp OP Exp（例如 k + 1）时，赋值分支的外层条件为真但内部检测
+到的不是赋值操作，因此不会进入二元运算处理分支，进而跳过对子表达式（如 ID k）的递归检查，导
+致未报 undefined 变量错误。
+修复内容：在 analyze_exp 中重构该段逻辑：
+先取出 op 节点并判断是否为 ASSIGNOP（赋值），走赋值分支；
+否则如果 op 节点为终结符，再判断是否为算术/关系/逻辑等二元操作并做相应类型检查；
+这样可以保证递归调用 analyze_exp 去检查子表达式（包括 rvalue 中的 ID）并触发未定义符号错误。
+
+3.
