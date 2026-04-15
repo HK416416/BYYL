@@ -771,6 +771,64 @@ ExpTypeInfo analyze_exp(SemanticContext* context, Node* node) {
             }
         }
     }
+    // 处理函数调用：ID LP RP 或 ID LP Args RP
+    else if (is_node_name(first_child, "ID") && num_children >= 3) {
+        // Expect forms: ID LP RP (3 children) or ID LP Args RP (4 children)
+        Node* second = get_child(node, 1);
+        if (second != NULL && is_node_name(second, "LP")) {
+            char* func_name = get_id_value(first_child);
+            if (func_name != NULL) {
+                Symbol* symbol = find_symbol(context->global_table, func_name);
+                if (symbol == NULL) {
+                    report_semantic_error(context, ERROR_UNDEFINED_FUNCTION, info.line, "Undefined function \"%s\"", func_name);
+                } else if (symbol->kind != SYMBOL_FUNCTION) {
+                    report_semantic_error(context, ERROR_NON_FUNCTION_CALL, info.line, "\"%s\" is not a function", func_name);
+                } else {
+                    // symbol is a function; check arguments if present
+                    ParamList* param = symbol->u.function.params;
+                    if (num_children == 4) {
+                        Node* args = get_child(node, 2);
+                        Node* cur = args;
+                        int arg_index = 0;
+                        while (cur != NULL && is_node_name(cur, "Args")) {
+                            Node* arg_exp = get_child(cur, 0);
+                            ExpTypeInfo arg_info = analyze_exp(context, arg_exp);
+
+                            if (param != NULL) {
+                                if (arg_info.type != NULL && param->type != NULL) {
+                                    if (!is_type_compatible(param->type, arg_info.type)) {
+                                        report_semantic_error(context, ERROR_FUNCTION_ARGUMENT_MISMATCH, info.line,
+                                                            "Function call mismatched for \"%s\"", func_name);
+                                    }
+                                }
+                                param = param->next;
+                            } else {
+                                // more args than parameters
+                                report_semantic_error(context, ERROR_FUNCTION_ARGUMENT_MISMATCH, info.line,
+                                                    "Function call mismatched for \"%s\"", func_name);
+                            }
+
+                            arg_index++;
+                            if (cur->u.nonterm.num_children > 1) cur = get_child(cur, 2);
+                            else cur = NULL;
+                        }
+
+                        if (param != NULL) {
+                            // fewer args than parameters
+                            report_semantic_error(context, ERROR_FUNCTION_ARGUMENT_MISMATCH, info.line,
+                                                "Function call mismatched for \"%s\"", func_name);
+                        }
+                    }
+
+                    // set return type
+                    if (symbol->u.function.return_type != NULL) {
+                        info.type = copy_type(symbol->u.function.return_type);
+                    }
+                    info.is_lvalue = 0;
+                }
+            }
+        }
+    }
     // 处理其他表达式类型（简化：暂时返回空类型）
     
     return info;
