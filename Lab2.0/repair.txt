@@ -45,3 +45,7 @@ Lab2.0/Test/test_err08_return_mismatch.cmm
 对于直接返回常量的问题不会被识别成变量不匹配。
 在 analyze_exp 中增加对常量终结符的处理：当遇到整型或浮点常量（终结符名为 INT/INT_CONST、FLOAT/FLOAT_CONST）时，返回相应的基本类型（TYPE_INT / TYPE_FLOAT），并将 is_lvalue 设为 0。
 之前 return 检查只在 exp_info.type 非空时才比较类型。现在 literal 和 variable 的类型都会被正确填充，从而触发类型不匹配的错误报告（Error type 8）。
+
+5.2026年4月15日16:55
+Lab2.0/Test/test_err09_func_arg_mismatch.cmm
+err09，对于函数参数不匹配不报错的问题，修复成样例的输出模式

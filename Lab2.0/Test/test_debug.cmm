@@ -1,5 +1,5 @@
 int main()
 {
-    int i = 0;
-    j = 1 + k;  // j和k都未定义
+    float i;
+    1 + i; 
 }

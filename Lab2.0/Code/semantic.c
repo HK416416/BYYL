@@ -4,6 +4,9 @@
 #include <string.h>
 #include <stdarg.h>
 
+/* strdup may not be declared depending on feature macros; declare it to avoid implicit-declaration warnings */
+extern char* strdup(const char*);
+
 
 typedef struct Node {
     char* name;
@@ -823,36 +826,137 @@ ExpTypeInfo analyze_exp(SemanticContext* context, Node* node) {
                     // symbol is a function; check arguments if present
                     ParamList* param = symbol->u.function.params;
                     if (num_children == 4) {
+                        // First, collect actual argument types (and analyze each arg expression)
                         Node* args = get_child(node, 2);
                         Node* cur = args;
-                        int arg_index = 0;
+                        int arg_count = 0;
+                        char** arg_type_strs = NULL;
+
                         while (cur != NULL && is_node_name(cur, "Args")) {
                             Node* arg_exp = get_child(cur, 0);
                             ExpTypeInfo arg_info = analyze_exp(context, arg_exp);
 
-                            if (param != NULL) {
-                                if (arg_info.type != NULL && param->type != NULL) {
-                                    if (!is_type_compatible(param->type, arg_info.type)) {
-                                        report_semantic_error(context, ERROR_FUNCTION_ARGUMENT_MISMATCH, info.line,
-                                                            "Function call mismatched for \"%s\"", func_name);
-                                    }
-                                }
-                                param = param->next;
+                            char* tstr = NULL;
+                            if (arg_info.type != NULL) {
+                                tstr = type_to_string(arg_info.type);
                             } else {
-                                // more args than parameters
-                                report_semantic_error(context, ERROR_FUNCTION_ARGUMENT_MISMATCH, info.line,
-                                                    "Function call mismatched for \"%s\"", func_name);
+                                tstr = strdup("null");
                             }
 
-                            arg_index++;
+                            arg_type_strs = (char**)realloc(arg_type_strs, sizeof(char*) * (arg_count + 1));
+                            arg_type_strs[arg_count] = tstr;
+                            arg_count++;
+
                             if (cur->u.nonterm.num_children > 1) cur = get_child(cur, 2);
                             else cur = NULL;
                         }
 
-                        if (param != NULL) {
-                            // fewer args than parameters
+                        // Build parameter type list string
+                        int param_count = 0;
+                        ParamList* ptmp = symbol->u.function.params;
+                        char** param_type_strs = NULL;
+                        while (ptmp != NULL) {
+                            char* pts = NULL;
+                            if (ptmp->type != NULL) pts = type_to_string(ptmp->type);
+                            else pts = strdup("null");
+                            param_type_strs = (char**)realloc(param_type_strs, sizeof(char*) * (param_count + 1));
+                            param_type_strs[param_count] = pts;
+                            param_count++;
+                            ptmp = ptmp->next;
+                        }
+
+                        // Compare counts and types
+                        int mismatch = 0;
+                        if (arg_count != param_count) mismatch = 1;
+                        else {
+                            for (int i = 0; i < arg_count; ++i) {
+                                // reconstruct Type from param_type_strs isn't straightforward; use is_type_compatible instead
+                                // find corresponding param Type
+                                ParamList* pp = symbol->u.function.params;
+                                for (int j = 0; j < i && pp != NULL; ++j) pp = pp->next;
+                                Type* ptype = pp ? pp->type : NULL;
+                                // we only have arg_type_strs (strings); better to re-analyze arg expression types
+                                // but we didn't keep ExpTypeInfo types array; so re-analyze quickly
+                                // (acceptable since args are simple in tests)
+                                // get arg node again: traverse args from start
+                                Node* cur2 = args; int idx = 0; Node* argnode = NULL;
+                                while (cur2 != NULL && is_node_name(cur2, "Args")) {
+                                    if (idx == i) { argnode = get_child(cur2, 0); break; }
+                                    idx++;
+                                    if (cur2->u.nonterm.num_children > 1) cur2 = get_child(cur2, 2);
+                                    else cur2 = NULL;
+                                }
+                                ExpTypeInfo arg_info = analyze_exp(context, argnode);
+                                if (ptype == NULL || arg_info.type == NULL || !is_type_compatible(ptype, arg_info.type)) {
+                                    mismatch = 1; break;
+                                }
+                            }
+                        }
+
+                        if (mismatch) {
+                            // build signature strings
+                            // params
+                            int buf_len = 256;
+                            char* params_buf = (char*)malloc(buf_len);
+                            params_buf[0] = '\0';
+                            strcat(params_buf, "");
+                            for (int i = 0; i < param_count; ++i) {
+                                if (i > 0) strcat(params_buf, ", ");
+                                strcat(params_buf, param_type_strs[i]);
+                            }
+                            // args
+                            char* args_buf = (char*)malloc(buf_len);
+                            args_buf[0] = '\0';
+                            for (int i = 0; i < arg_count; ++i) {
+                                if (i > 0) strcat(args_buf, ", ");
+                                strcat(args_buf, arg_type_strs[i]);
+                            }
+
+                            // wrap with parentheses in printf
+                            char params_wrapped[512];
+                            char args_wrapped[512];
+                            snprintf(params_wrapped, sizeof(params_wrapped), "%s", params_buf);
+                            snprintf(args_wrapped, sizeof(args_wrapped), "%s", args_buf);
+
                             report_semantic_error(context, ERROR_FUNCTION_ARGUMENT_MISMATCH, info.line,
-                                                "Function call mismatched for \"%s\"", func_name);
+                                                "Function \"%s(%s)\" is not applicable for arguments \"(%s)\"",
+                                                func_name, params_wrapped, args_wrapped);
+
+                            free(params_buf);
+                            free(args_buf);
+                        }
+
+                        // free temp arrays
+                        for (int i = 0; i < arg_count; ++i) free(arg_type_strs[i]);
+                        free(arg_type_strs);
+                        for (int i = 0; i < param_count; ++i) free(param_type_strs[i]);
+                        free(param_type_strs);
+                    } else {
+                        // no args; if function expects params, report mismatch
+                        if (symbol->u.function.params != NULL) {
+                            // build param string
+                            int param_count = 0; ParamList* ptmp2 = symbol->u.function.params;
+                            char** param_type_strs2 = NULL;
+                            while (ptmp2 != NULL) {
+                                char* pts = NULL;
+                                if (ptmp2->type != NULL) pts = type_to_string(ptmp2->type);
+                                else pts = strdup("null");
+                                param_type_strs2 = (char**)realloc(param_type_strs2, sizeof(char*) * (param_count + 1));
+                                param_type_strs2[param_count] = pts;
+                                param_count++;
+                                ptmp2 = ptmp2->next;
+                            }
+                            int buf_len = 256; char* params_buf2 = (char*)malloc(buf_len); params_buf2[0] = '\0';
+                            for (int i = 0; i < param_count; ++i) {
+                                if (i > 0) strcat(params_buf2, ", ");
+                                strcat(params_buf2, param_type_strs2[i]);
+                            }
+                            report_semantic_error(context, ERROR_FUNCTION_ARGUMENT_MISMATCH, info.line,
+                                                "Function \"%s(%s)\" is not applicable for arguments \"()\"",
+                                                func_name, params_buf2);
+                            for (int i = 0; i < param_count; ++i) free(param_type_strs2[i]);
+                            free(param_type_strs2);
+                            free(params_buf2);
                         }
                     }
 
