@@ -24,6 +24,7 @@ int main()
 这样可以保证递归调用 analyze_exp 去检查子表达式（包括 rvalue 中的 ID）并触发未定义符号错误。
 
 3.2026年4月15日16:20
+对err03
 int main() {
   foo();
   return 0;
@@ -38,3 +39,9 @@ ID LP Args RP（带参数调用）
 如果找到但不是函数，报告 ERROR_NON_FUNCTION_CALL（Error type 11）；
 若是函数且带参数，则对每个实参递归调用 analyze_exp 并按顺序与函数的形参比较类型；形参数量或类型不匹配时，报告 ERROR_FUNCTION_ARGUMENT_MISMATCH（Error type 9）；
 将表达式类型设为函数返回类型（以便上层类型检查）
+
+4.2026年4月15日16:39
+Lab2.0/Test/test_err08_return_mismatch.cmm
+对于直接返回常量的问题不会被识别成变量不匹配。
+在 analyze_exp 中增加对常量终结符的处理：当遇到整型或浮点常量（终结符名为 INT/INT_CONST、FLOAT/FLOAT_CONST）时，返回相应的基本类型（TYPE_INT / TYPE_FLOAT），并将 is_lvalue 设为 0。
+之前 return 检查只在 exp_info.type 非空时才比较类型。现在 literal 和 variable 的类型都会被正确填充，从而触发类型不匹配的错误报告（Error type 8）。

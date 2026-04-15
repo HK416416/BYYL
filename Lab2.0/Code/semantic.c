@@ -162,7 +162,28 @@ void analyze_ext_def(SemanticContext* context, Node* node) {
     Node* second_child = get_child(node, 1);
     if (is_node_name(second_child, "ExtDecList")) {
         // 变量定义：Specifier ExtDecList SEMI
-        // TODO: 实现变量定义分析
+        Node* extdec = second_child;
+        while (extdec != NULL && is_node_name(extdec, "ExtDecList")) {
+            Node* var_dec = get_child(extdec, 0);
+            if (var_dec != NULL && is_node_name(var_dec, "VarDec")) {
+                char* var_name = NULL;
+                analyze_var_dec(context, var_dec, base_type, &var_name);
+                if (var_name != NULL) {
+                    Symbol* existing = find_symbol(context->global_table, var_name);
+                    if (existing != NULL) {
+                        report_semantic_error(context, ERROR_REDEFINED_VARIABLE,
+                                            get_node_line(var_dec),
+                                            "Redefined variable \"%s\"", var_name);
+                    } else {
+                        Symbol* var_symbol = new_variable_symbol(var_name, copy_type(base_type), get_node_line(var_dec));
+                        insert_symbol(context->global_table, var_symbol);
+                    }
+                }
+            }
+
+            if (extdec->u.nonterm.num_children > 1) extdec = get_child(extdec, 2);
+            else extdec = NULL;
+        }
     } else if (is_node_name(second_child, "SEMI")) {
         // 类型声明：Specifier SEMI
         // 不做特殊处理
@@ -769,6 +790,21 @@ ExpTypeInfo analyze_exp(SemanticContext* context, Node* node) {
                 info.type = copy_type(symbol->u.variable.type);
                 info.is_lvalue = 1;
             }
+        }
+    }
+    // 处理整型/浮点/字符串常量
+    else if (num_children == 1 && first_child->is_terminal) {
+        const char* tname = first_child->name;
+        if (strcmp(tname, "INT") == 0 || strcmp(tname, "INT_CONST") == 0) {
+            info.type = new_type_basic(TYPE_INT);
+            info.is_lvalue = 0;
+        } else if (strcmp(tname, "FLOAT") == 0 || strcmp(tname, "FLOAT_CONST") == 0) {
+            info.type = new_type_basic(TYPE_FLOAT);
+            info.is_lvalue = 0;
+        } else if (strcmp(tname, "STRING") == 0) {
+            // strings are not used in type checks in this lab, leave as NULL or handle as needed
+            info.type = NULL;
+            info.is_lvalue = 0;
         }
     }
     // 处理函数调用：ID LP RP 或 ID LP Args RP
