@@ -719,6 +719,47 @@ ExpTypeInfo analyze_exp(SemanticContext* context, Node* node) {
     
     Node* first_child = get_child(node, 0);
     
+    // 处理数组访问：Exp LB Exp RB
+    if (num_children == 4 && is_node_name(get_child(node, 1), "LB") && is_node_name(get_child(node, 3), "RB")) {
+        Node* left = get_child(node, 0);
+        Node* index = get_child(node, 2);
+
+        ExpTypeInfo left_info = analyze_exp(context, left);
+        ExpTypeInfo idx_info = analyze_exp(context, index);
+
+        if (left_info.type == NULL || left_info.type->kind != TYPE_KIND_ARRAY) {
+            /* 如果左侧是简单标识符，使用标识符名字并报告该标识符所在行；否则保持原有通用信息 */
+            char* id_name = NULL;
+            Node* id_probe = NULL;
+            /* 尝试向下寻找最内层的 ID 终结符以获得变量名和确切行号 */
+            Node* probe = left;
+            while (probe != NULL) {
+                if (probe->is_terminal && strcmp(probe->name, "ID") == 0) { id_probe = probe; break; }
+                if (!probe->is_terminal && probe->u.nonterm.num_children > 0) {
+                    probe = get_child(probe, 0);
+                } else break;
+            }
+            if (id_probe != NULL) id_name = get_id_value(id_probe);
+            if (id_name != NULL) {
+                report_semantic_error(context, ERROR_NON_ARRAY_SUBSCRIPT, get_node_line(id_probe), "\"%s\" is not an array", id_name);
+            } else {
+                report_semantic_error(context, ERROR_NON_ARRAY_SUBSCRIPT, info.line, "Not an array");
+            }
+            return info;
+        }
+
+        // check index is integer
+        if (idx_info.type == NULL || !(idx_info.type->kind == TYPE_KIND_BASIC && idx_info.type->u.basic == TYPE_INT)) {
+            report_semantic_error(context, ERROR_NON_INTEGER_SUBSCRIPT, info.line, "Array subscript is not an integer");
+            return info;
+        }
+
+        // element type is the array element type
+        info.type = copy_type(left_info.type->u.array.elem);
+        info.is_lvalue = 1;
+        return info;
+    }
+
     // 处理二元形式（可能是赋值或其它二元运算）: Exp OP Exp
     if (num_children == 3 && is_node_name(first_child, "Exp")) {
         Node* op_node = get_child(node, 1);

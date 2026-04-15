@@ -49,3 +49,8 @@ Lab2.0/Test/test_err08_return_mismatch.cmm
 5.2026年4月15日16:55
 Lab2.0/Test/test_err09_func_arg_mismatch.cmm
 err09，对于函数参数不匹配不报错的问题，修复成样例的输出模式
+
+6.2026年4月15日17:17:55
+Lab2.0/Test/test_err10_non_array_subscript.cmm
+err10，修复对非数组变量进行数组调用不报错的问题。
+
