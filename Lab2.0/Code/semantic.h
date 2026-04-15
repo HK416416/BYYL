@@ -64,7 +64,7 @@ void analyze_ext_def_list(SemanticContext* context, Node* node);
 void analyze_ext_def(SemanticContext* context, Node* node);
 void analyze_specifier(SemanticContext* context, Node* node, Type** type);
 void analyze_struct_specifier(SemanticContext* context, Node* node, Type** type);
-void analyze_var_dec(SemanticContext* context, Node* node, Type* base_type, char** name);
+void analyze_var_dec(SemanticContext* context, Node* node, Type* base_type, char** name, Type** type);
 void analyze_fun_dec(SemanticContext* context, Node* node, Type* return_type);
 void analyze_param_dec(SemanticContext* context, Node* node, ParamList** param);
 void analyze_comp_st(SemanticContext* context, Node* node, Type* return_type);

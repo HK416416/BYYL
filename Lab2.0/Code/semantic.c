@@ -121,6 +121,14 @@ static int get_int_value(Node* node) {
     return node->u.term.int_val;
 }
 
+/* 辅助函数：获取FLOAT节点的值 */
+static float get_float_value(Node* node) {
+    if (node == NULL || !node->is_terminal || strcmp(node->name, "FLOAT") != 0) {
+        return 0.0f;
+    }
+    return node->u.term.float_val;
+}
+
 /* 分析Program节点 */
 void analyze_program(SemanticContext* context, Node* node) {
     if (!is_node_name(node, "Program")) return;
@@ -170,7 +178,8 @@ void analyze_ext_def(SemanticContext* context, Node* node) {
             Node* var_dec = get_child(extdec, 0);
             if (var_dec != NULL && is_node_name(var_dec, "VarDec")) {
                 char* var_name = NULL;
-                analyze_var_dec(context, var_dec, base_type, &var_name);
+                Type* var_type = NULL;
+                analyze_var_dec(context, var_dec, base_type, &var_name, &var_type);
                 if (var_name != NULL) {
                     Symbol* existing = find_symbol(context->global_table, var_name);
                     if (existing != NULL) {
@@ -383,8 +392,12 @@ void analyze_struct_specifier(SemanticContext* context, Node* node, Type** type)
 }
 
 /* 分析VarDec节点（返回变量名和完整类型） */
-void analyze_var_dec(SemanticContext* context, Node* node, Type* base_type, char** name) {
-    if (node == NULL || base_type == NULL || name == NULL) return;
+void analyze_var_dec(SemanticContext* context, Node* node, Type* base_type, char** name, Type** type) {
+    if (node == NULL || base_type == NULL || name == NULL || type == NULL) return;
+    
+    // 初始化返回值为NULL
+    *name = NULL;
+    *type = NULL;
     
     if (is_node_name(node, "VarDec")) {
         Node* first_child = get_child(node, 0);
@@ -392,21 +405,28 @@ void analyze_var_dec(SemanticContext* context, Node* node, Type* base_type, char
         if (is_node_name(first_child, "ID")) {
             // 简单变量：ID
             *name = get_id_value(first_child);
-            // 类型就是base_type
+            *type = copy_type(base_type);
         } else if (is_node_name(first_child, "VarDec")) {
             // 数组变量：VarDec LB INT_CONST RB
             Node* var_dec = first_child;
             Node* int_const = get_child(node, 2);
             
             char* var_name = NULL;
-            analyze_var_dec(context, var_dec, base_type, &var_name);
+            Type* elem_type = NULL;
+            analyze_var_dec(context, var_dec, base_type, &var_name, &elem_type);
             
             if (var_name != NULL && int_const != NULL) {
                 int array_size = get_int_value(int_const);
-                Type* array_type = new_type_array(copy_type(base_type), array_size);
+                // 如果elem_type不为NULL，说明是嵌套数组（多维数组）
+                // 否则使用base_type作为元素类型
+                Type* element_type = (elem_type != NULL) ? elem_type : copy_type(base_type);
+                Type* array_type = new_type_array(element_type, array_size);
                 *name = var_name;
-                // 注意：这里需要返回数组类型，但函数签名只返回名称
-                // 实际类型应该在调用处处理
+                *type = array_type;
+            } else if (var_name != NULL) {
+                // 没有INT_CONST？不应该发生，但处理一下
+                *name = var_name;
+                *type = copy_type(base_type);
             }
         }
     }
@@ -492,13 +512,16 @@ void analyze_param_dec(SemanticContext* context, Node* node, ParamList** param) 
     
     if (param_type != NULL && var_dec != NULL) {
         char* param_name = NULL;
-        analyze_var_dec(context, var_dec, param_type, &param_name);
+        Type* param_full_type = NULL;
+        analyze_var_dec(context, var_dec, param_type, &param_name, &param_full_type);
         
         if (param_name != NULL) {
-            *param = new_param_list(param_name, param_type);
+            // 使用完整的类型（包括数组维度）
+            Type* actual_type = (param_full_type != NULL) ? param_full_type : copy_type(param_type);
+            *param = new_param_list(param_name, actual_type);
             
             // 同时将参数作为变量添加到当前符号表
-            Symbol* var_symbol = new_variable_symbol(param_name, copy_type(param_type), get_node_line(var_dec));
+            Symbol* var_symbol = new_variable_symbol(param_name, copy_type(actual_type), get_node_line(var_dec));
             insert_symbol(context->current_table, var_symbol);
         }
     }
@@ -659,12 +682,17 @@ void analyze_dec(SemanticContext* context, Node* node, Type* base_type) {
     
     if (var_dec != NULL) {
         char* var_name = NULL;
-        Type* var_type = copy_type(base_type);
+        Type* var_type = NULL;
         
         // 分析变量声明（可能包含数组维度）
-        analyze_var_dec(context, var_dec, base_type, &var_name);
+        analyze_var_dec(context, var_dec, base_type, &var_name, &var_type);
         
         if (var_name != NULL) {
+            // 如果var_type为NULL，使用base_type作为后备
+            if (var_type == NULL) {
+                var_type = copy_type(base_type);
+            }
+            
             // 检查变量是否已定义
             Symbol* existing = find_symbol(context->global_table, var_name);
             if (existing != NULL) {
@@ -750,7 +778,35 @@ ExpTypeInfo analyze_exp(SemanticContext* context, Node* node) {
 
         // check index is integer
         if (idx_info.type == NULL || !(idx_info.type->kind == TYPE_KIND_BASIC && idx_info.type->u.basic == TYPE_INT)) {
-            report_semantic_error(context, ERROR_NON_INTEGER_SUBSCRIPT, info.line, "Array subscript is not an integer");
+            // 尝试获取下标表达式的文本表示
+            char* subscript_text = NULL;
+            if (index != NULL) {
+                // 如果是常量节点，尝试获取其值
+                if (index->is_terminal) {
+                    const char* tname = index->name;
+                    if (strcmp(tname, "INT") == 0 || strcmp(tname, "INT_CONST") == 0) {
+                        int int_val = get_int_value(index);
+                        subscript_text = (char*)malloc(32);
+                        snprintf(subscript_text, 32, "%d", int_val);
+                    } else if (strcmp(tname, "FLOAT") == 0 || strcmp(tname, "FLOAT_CONST") == 0) {
+                        float float_val = get_float_value(index);
+                        subscript_text = (char*)malloc(32);
+                        snprintf(subscript_text, 32, "%.1f", float_val);
+                    } else if (strcmp(tname, "ID") == 0) {
+                        subscript_text = get_id_value(index);
+                    }
+                }
+            }
+            
+            if (subscript_text != NULL) {
+                report_semantic_error(context, ERROR_NON_INTEGER_SUBSCRIPT, info.line, "\"%s\" is not an integer", subscript_text);
+                // 如果subscript_text是动态分配的，需要释放
+                if (subscript_text != get_id_value(index)) { // 不是ID的字符串（是动态分配的）
+                    free(subscript_text);
+                }
+            } else {
+                report_semantic_error(context, ERROR_NON_INTEGER_SUBSCRIPT, info.line, "Array subscript is not an integer");
+            }
             return info;
         }
 
