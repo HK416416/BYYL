@@ -1,0 +1,33 @@
+// 结构体1
+struct S1 {
+    int a;
+    struct {
+        float f;
+        // 第二层嵌套匿名结构体
+        struct {
+            int x;
+            float y;
+        } inner2;
+    } inner1;
+};
+
+// 结构体2
+struct S2 {
+    int b;
+    struct {
+        float g;
+        // 第二层嵌套匿名结构体
+        struct {
+            int m;
+            float n;
+        } inside2;
+    } inside1;
+};
+
+struct S1 s1;
+struct S2 s2;
+
+int main() {
+    s1 = s2;
+    return 0;
+}

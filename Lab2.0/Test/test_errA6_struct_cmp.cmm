@@ -1,4 +1,4 @@
-struct Temp1
+struct Templ
 {
     int i;
     float j;
@@ -11,8 +11,7 @@ struct Temp2
 
 int main()
 {
-    struct Temp1 t1;
+    struct Templ t1;
     struct Temp2 t2;
     t1 = t2;
-    return 0;
 }

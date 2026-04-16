@@ -203,17 +203,33 @@ void analyze_ext_def(SemanticContext* context, Node* node) {
         // 函数定义：Specifier FunDec CompSt 或 Specifier FunDec SEMI
         Node* fun_dec = second_child;
         Node* third_child = get_child(node, 2);
-        
-        // 分析函数声明
-        analyze_fun_dec(context, fun_dec, base_type);
-        
-        if (is_node_name(third_child, "CompSt")) {
-            // 函数定义体
-            context->current_return_type = base_type;
-            analyze_comp_st(context, third_child, base_type);
-            context->current_return_type = NULL;
+
+        // 如果是函数声明（SEMI），根据 requirements 不支持函数声明，报告错误类型 B
+        if (third_child != NULL && is_node_name(third_child, "SEMI")) {
+            /* Report incomplete definition as Error type B at the declaration line */
+            Node* id_node = get_child(fun_dec, 0);
+            char* func_name = get_id_value(id_node);
+            int line = get_node_line(node);
+            /* set global syntax error flags similar to parser's behavior */
+            extern int has_syntax_error;
+            has_error = 1;
+            has_syntax_error = 1;
+            if (func_name != NULL) {
+                printf("Error type B at Line %d: Incomplete definition of function \"%s\".\n", line, func_name);
+            } else {
+                printf("Error type B at Line %d: Incomplete definition of function.\n", line);
+            }
+        } else {
+            // 正常的函数定义：先分析函数声明并插入符号，再分析函数体
+            analyze_fun_dec(context, fun_dec, base_type);
+
+            if (is_node_name(third_child, "CompSt")) {
+                // 函数定义体
+                context->current_return_type = base_type;
+                analyze_comp_st(context, third_child, base_type);
+                context->current_return_type = NULL;
+            }
         }
-        // 如果是函数声明（SEMI），不需要分析函数体
     }
 }
 

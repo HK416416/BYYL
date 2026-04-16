@@ -1,5 +1,5 @@
 struct S {
-  int a;
+  float b,a;
   int a; /* duplicated field — should trigger (15) */
 };
 

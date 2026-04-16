@@ -1,0 +1,26 @@
+struct S1 {
+    int a;
+
+    struct {
+        float f;
+        int i;
+    } inner;
+};
+
+
+struct S2 {
+    int b;
+
+    struct {
+        float g;
+        int j;
+    } inside;
+};
+
+struct S1 s1;
+struct S2 s2;
+
+int main() {
+    s1 = s2; 
+    return 0;
+}

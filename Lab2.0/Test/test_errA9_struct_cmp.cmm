@@ -1,0 +1,27 @@
+// 结构体1
+struct S1 {
+    int a;
+    // 二维结构体数组
+    struct {
+        float f;
+        int i;
+    } arr[10][2];
+};
+
+// 结构体2
+struct S2 {
+    int b;
+    // 二维结构体数组，数组大小不同
+    struct {
+        float g;
+        int j;
+    } arr[5][3];
+};
+
+struct S1 s1;
+struct S2 s2;
+
+int main() {
+    s1 = s2;
+    return 0;
+}

@@ -65,3 +65,18 @@ Lab2.0/Test/test_err14_undefined_field.cmm
 将这段改为：仅当左侧类型已知且不是左值时才报 Error type 6：
 if (!left_info.is_lvalue && left_info.type != NULL) { report ... }
 这样若左侧因之前已报错（如未定义字段）导致类型为 NULL，就不会再次报 Error type 6。
+
+9.2026年4月16日19:38
+Lab2.0/Test/test_errA1_declared_func.cmm
+ps：对于函数声明问题，本小组不实现
+出现对于函数声明问题报了Error type 4 at Line 3: Redefined function "f".，识别成了两个函数实现
+修复方式：
+当解析外部定义 ExtDef 中为 Specifier FunDec SEMI（函数声明/原型）时：
+按 requirements 的限制，不支持函数声明功能。改为立即报告：
+Error type B at Line <line>: Incomplete definition of function "<name>".
+同时设置全局语法错误标志（与 parser 的行为一致）。
+对于实际的函数定义（Specifier FunDec CompSt），保留原有处理（插入符号并分析函数体）。
+这样会避免先插入“声明”导致后续真正定义时报 Error type 4（Redefined function）。
+
+10.2026年4月16日20:15
+完成所有的测试文件的测试过程。（实际提交注意删除main.c中的print_tree(root, 0);）
