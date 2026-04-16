@@ -58,3 +58,10 @@ err10，修复对非数组变量进行数组调用不报错的问题。
 Lab2.0/Test/test_err12_array_index_nonint.cmm
 err12，修复数组内参数非int和二维数组识别的问题。
 
+8.2026年4月16日19:19
+Lab2.0/Test/test_err13_non_struct_dot.cmm
+Lab2.0/Test/test_err14_undefined_field.cmm
+修复对非结构体变量进行结构体调用的时候的问题，出现err14的重复报错（与err06），因此在处理赋值表达式（ASSIGNOP）时，原来只检查 if (!left_info.is_lvalue) 就会报 Error type 6（非左值赋值）。这会在左侧表达式本身已报错（例如未定义字段，Error type 14）时产生重复/多余错误。
+将这段改为：仅当左侧类型已知且不是左值时才报 Error type 6：
+if (!left_info.is_lvalue && left_info.type != NULL) { report ... }
+这样若左侧因之前已报错（如未定义字段）导致类型为 NULL，就不会再次报 Error type 6。

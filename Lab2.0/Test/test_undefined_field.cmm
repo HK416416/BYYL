@@ -1,0 +1,6 @@
+struct A { int x; float y; };
+int main() {
+    struct A a;
+    a.z;  // 访问未定义的域，应该触发错误类型14
+    return 0;
+}

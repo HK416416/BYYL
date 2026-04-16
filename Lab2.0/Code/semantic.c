@@ -816,6 +816,74 @@ ExpTypeInfo analyze_exp(SemanticContext* context, Node* node) {
         return info;
     }
 
+    // 处理结构体成员访问：Exp DOT ID
+    if (num_children == 3 && is_node_name(get_child(node, 1), "DOT")) {
+        Node* left = get_child(node, 0);
+        Node* dot_node = get_child(node, 1);
+        Node* field_node = get_child(node, 2);
+        
+        ExpTypeInfo left_info = analyze_exp(context, left);
+        
+        // 检查左侧表达式是否是结构体类型
+        if (left_info.type == NULL || left_info.type->kind != TYPE_KIND_STRUCTURE) {
+            /* 如果左侧是简单标识符，使用标识符名字并报告该标识符所在行；否则保持原有通用信息 */
+            char* id_name = NULL;
+            Node* id_probe = NULL;
+            /* 尝试向下寻找最内层的 ID 终结符以获得变量名和确切行号 */
+            Node* probe = left;
+            while (probe != NULL) {
+                if (probe->is_terminal && strcmp(probe->name, "ID") == 0) { id_probe = probe; break; }
+                if (!probe->is_terminal && probe->u.nonterm.num_children > 0) {
+                    probe = get_child(probe, 0);
+                } else break;
+            }
+            if (id_probe != NULL) id_name = get_id_value(id_probe);
+            if (id_name != NULL) {
+                report_semantic_error(context, ERROR_NON_STRUCTURE_DOT, get_node_line(id_probe), "\"%s\" is not a structure", id_name);
+            } else {
+                report_semantic_error(context, ERROR_NON_STRUCTURE_DOT, info.line, "Not a structure");
+            }
+            return info;
+        }
+        
+        // 获取域名
+        char* field_name = NULL;
+        if (field_node != NULL && is_node_name(field_node, "ID")) {
+            field_name = get_id_value(field_node);
+        }
+        
+        if (field_name == NULL) {
+            // 不应该发生，但处理一下
+            return info;
+        }
+        
+        // 在结构体域中查找该域名
+        FieldList* field = left_info.type->u.structure;
+        Type* field_type = NULL;
+        int found = 0;
+        
+        while (field != NULL) {
+            if (field->name != NULL && strcmp(field->name, field_name) == 0) {
+                field_type = field->type;
+                found = 1;
+                break;
+            }
+            field = field->tail;
+        }
+        
+        if (!found) {
+            // 报告未定义的域错误（错误类型14）
+            report_semantic_error(context, ERROR_UNDEFINED_FIELD, info.line,
+                                "Structure has no field named \"%s\"", field_name);
+            return info;
+        }
+        
+        // 结构体成员访问是左值
+        info.type = copy_type(field_type);
+        info.is_lvalue = 1;
+        return info;
+    }
+
     // 处理二元形式（可能是赋值或其它二元运算）: Exp OP Exp
     if (num_children == 3 && is_node_name(first_child, "Exp")) {
         Node* op_node = get_child(node, 1);
@@ -825,8 +893,8 @@ ExpTypeInfo analyze_exp(SemanticContext* context, Node* node) {
             // 赋值表达式
             ExpTypeInfo left_info = analyze_exp(context, first_child);
 
-            // 检查左值
-            if (!left_info.is_lvalue) {
+            // 检查左值：仅在左侧类型已知且不是左值时报告（避免在左侧已产生其它错误时重复报告）
+            if (!left_info.is_lvalue && left_info.type != NULL) {
                 report_semantic_error(context, ERROR_NON_LVALUE_ASSIGNMENT,
                                     info.line, "The left-hand side of an assignment must be a variable");
             }
