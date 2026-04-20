@@ -1,0 +1,36 @@
+/* test_final5.cmm: 函数参数结构等价测试（错误类型9） */
+struct Point {
+    int x;
+    int y;
+};
+
+struct Coord {
+    int a;
+    int b;
+};
+
+struct Different {
+    float x;
+    int y;
+};
+
+int foo(struct Point p) {
+    return 0;
+}
+
+int bar(struct Different d) {
+    return 0;
+}
+
+int main() {
+    struct Point pt;
+    struct Coord cd;
+    struct Different diff;
+    
+    foo(pt);        // 无错误：相同类型
+    foo(cd);        // 应无错误：结构等价（成员相同）
+    bar(diff);      // 无错误：相同类型
+    bar(pt);        // 错误类型9：参数类型不匹配（成员类型不同）
+    
+    return 0;
+}

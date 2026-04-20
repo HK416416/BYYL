@@ -1,0 +1,44 @@
+/* test_final4.cmm: 匿名结构体等价测试 */
+struct Outer1 {
+    int id;
+    struct {
+        float x;
+        int y;
+    } inner;        // 匿名结构体类型
+};
+
+struct Outer2 {
+    int id;
+    struct {
+        float a;
+        int b;
+    } inner;        // 另一个匿名结构体，但成员相同
+};
+
+struct Outer3 {
+    int id;
+    struct {
+        int c;
+        float d;
+    } inner;        // 成员顺序不同
+};
+
+struct Outer4 {
+    int id;
+    struct Named {
+        float x;
+        int y;
+    } inner;        // 命名结构体
+};
+
+int main() {
+    struct Outer1 o1;
+    struct Outer2 o2;
+    struct Outer3 o3;
+    struct Outer4 o4;
+    
+    o1 = o2;        // 应无错误：匿名结构体等价
+    o1 = o3;        // 错误类型5：成员顺序不同
+    o1 = o4;        // 错误类型5：命名 vs 匿名？根据规则，匿名结构体视为具有独有隐藏名，但结构等价仍应比较成员。成员相同，但结构体名称不同（一个匿名，一个命名）是否影响？根据结构等价，应等价。但匿名结构体规则说“每个匿名结构体视为具有独有隐藏名”，可能意味着匿名结构体与任何命名结构体都不等价。实际上，结构等价只比较结构，不比较名称，所以应该等价。我们测试一下。
+    return 0;
+}

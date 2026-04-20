@@ -1,0 +1,18 @@
+/* test_final1.cmm: 结构等价正例 - 相同结构，不同名称，赋值应无错误 */
+struct A {
+    int x;
+    float y;
+};
+
+struct B {
+    int a;
+    float b;
+};
+
+int main() {
+    struct A a;
+    struct B b;
+    a = b;          // 结构等价，应无错误
+    b = a;          // 反向赋值也应无错误
+    return 0;
+}

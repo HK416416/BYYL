@@ -1,0 +1,243 @@
+测试结果详情
+============================================================
+
+文件: Test/test_array_debug.cmm
+返回码: 0
+输出: 无
+----------------------------------------
+
+文件: Test/test_array_ok.cmm
+返回码: 0
+输出: 无
+----------------------------------------
+
+文件: Test/test_custom.cmm
+返回码: 0
+输出:
+Error type 1 at Line 4: Undefined variable "j".
+Error type 1 at Line 4: Undefined variable "k".
+----------------------------------------
+
+文件: Test/test_debug.cmm
+返回码: 0
+输出:
+Error type 5 at Line 4: Type mismatched for assignment.
+----------------------------------------
+
+文件: Test/test_err01_undefine.cmm
+返回码: 0
+输出:
+Error type 1 at Line 4: Undefined variable "j".
+----------------------------------------
+
+文件: Test/test_err02_func_undefined.cmm
+返回码: 0
+输出:
+Error type 2 at Line 2: Undefined function "foo".
+----------------------------------------
+
+文件: Test/test_err03_redefined_var.cmm
+返回码: 0
+输出:
+Error type 3 at Line 2: Redefined variable "a".
+----------------------------------------
+
+文件: Test/test_err04_func_redefined.cmm
+返回码: 0
+输出:
+Error type 4 at Line 2: Redefined function "f".
+----------------------------------------
+
+文件: Test/test_err05_assignment_mismatch.cmm
+返回码: 0
+输出:
+Error type 5 at Line 4: Type mismatched for assignment.
+----------------------------------------
+
+文件: Test/test_err06_non_lvalue.cmm
+返回码: 0
+输出:
+Error type 6 at Line 2: The left-hand side of an assignment must be a variable.
+----------------------------------------
+
+文件: Test/test_err07_operand_mismatch.cmm
+返回码: 0
+输出:
+Error type 7 at Line 5: Type mismatched for operands.
+----------------------------------------
+
+文件: Test/test_err08_return_mismatch.cmm
+返回码: 0
+输出:
+Error type 8 at Line 1: Type mismatched for return.
+Error type 8 at Line 4: Type mismatched for return.
+----------------------------------------
+
+文件: Test/test_err09_func_arg_mismatch.cmm
+返回码: 0
+输出:
+Error type 9 at Line 4: Function "f(int)" is not applicable for arguments "(int, int)".
+----------------------------------------
+
+文件: Test/test_err10_non_array_subscript.cmm
+返回码: 0
+输出:
+Error type 10 at Line 3: "a" is not an array.
+----------------------------------------
+
+文件: Test/test_err11_non_function_call.cmm
+返回码: 0
+输出:
+Error type 11 at Line 3: "a" is not a function.
+----------------------------------------
+
+文件: Test/test_err12_array_index_nonint.cmm
+返回码: 0
+输出:
+Error type 12 at Line 3: Array subscript is not an integer.
+----------------------------------------
+
+文件: Test/test_err13_non_struct_dot.cmm
+返回码: 0
+输出:
+Error type 13 at Line 3: "a" is not a structure.
+----------------------------------------
+
+文件: Test/test_err14_undefined_field.cmm
+返回码: 0
+输出:
+Error type 14 at Line 9: Structure has no field named "m".
+Error type 14 at Line 10: Structure has no field named "n".
+----------------------------------------
+
+文件: Test/test_err15_redefined_field.cmm
+返回码: 0
+输出:
+Error type 15 at Line 3: Redefined field "a".
+----------------------------------------
+
+文件: Test/test_err16_redefined_struct.cmm
+返回码: 0
+输出:
+Error type 16 at Line 2: Duplicated name "S".
+----------------------------------------
+
+文件: Test/test_err17_undefined_struct.cmm
+返回码: 0
+输出:
+Error type 17 at Line 2: Undefined structure "U".
+----------------------------------------
+
+文件: Test/test_errA10_struct_cmp.cmm
+返回码: 0
+输出: 无
+----------------------------------------
+
+文件: Test/test_errA1_declared_func.cmm
+返回码: 0
+输出:
+Error type B at Line 1: Incomplete definition of function "f".
+----------------------------------------
+
+文件: Test/test_errA2_declared_func.cmm
+返回码: 0
+输出:
+Error type B at Line 6: Incomplete definition of function "func".
+Error type B at Line 8: Incomplete definition of function "func".
+----------------------------------------
+
+文件: Test/test_errA3_SameArea_var.cmm
+返回码: 0
+输出:
+Error type 3 at Line 9: Redefined variable "i".
+----------------------------------------
+
+文件: Test/test_errA4_SameArea_var.cmm
+返回码: 0
+输出:
+Error type 3 at Line 9: Redefined variable "i".
+Error type 3 at Line 10: Redefined variable "i".
+----------------------------------------
+
+文件: Test/test_errA5_struct_cmp.cmm
+返回码: 0
+输出: 无
+----------------------------------------
+
+文件: Test/test_errA6_struct_cmp.cmm
+返回码: 0
+输出:
+Error type 5 at Line 16: Type mismatched for assignment.
+----------------------------------------
+
+文件: Test/test_errA7_struct_cmp.cmm
+返回码: 0
+输出: 无
+----------------------------------------
+
+文件: Test/test_errA8_struct_cmp.cmm
+返回码: 0
+输出:
+Error type 5 at Line 23: Type mismatched for assignment.
+----------------------------------------
+
+文件: Test/test_errA9_struct_cmp.cmm
+返回码: 0
+输出: 无
+----------------------------------------
+
+文件: Test/test_final1.cmm
+返回码: 0
+输出: 无
+----------------------------------------
+
+文件: Test/test_final2.cmm
+返回码: 0
+输出:
+Error type 5 at Line 28: Type mismatched for assignment.
+Error type 5 at Line 29: Type mismatched for assignment.
+Error type 5 at Line 30: Type mismatched for assignment.
+----------------------------------------
+
+文件: Test/test_final3.cmm
+返回码: 0
+输出:
+Error type 5 at Line 30: Type mismatched for assignment.
+Error type 5 at Line 31: Type mismatched for assignment.
+----------------------------------------
+
+文件: Test/test_final4.cmm
+返回码: 0
+输出:
+Error type 5 at Line 41: Type mismatched for assignment.
+----------------------------------------
+
+文件: Test/test_final5.cmm
+返回码: 0
+输出:
+Error type 9 at Line 33: Function "bar(struct {x: float, y: int})" is not applicable for arguments "(struct {x: int, y: int})".
+----------------------------------------
+
+文件: Test/test_final6.cmm
+返回码: 0
+输出:
+Error type 17 at Line 34: Undefined structure "Unknown".
+Error type 1 at Line 37: Undefined variable "undefined_var".
+Error type 5 at Line 40: Type mismatched for assignment.
+Error type 5 at Line 43: Type mismatched for assignment.
+Error type 6 at Line 46: The left-hand side of an assignment must be a variable.
+Error type 7 at Line 49: Type mismatched for operands.
+Error type 9 at Line 58: Function "foo(int, float)" is not applicable for arguments "(int)".
+Error type 10 at Line 64: "i" is not an array.
+Error type 11 at Line 67: "i" is not a function.
+Error type 12 at Line 70: Array subscript is not an integer.
+Error type 13 at Line 73: "i" is not a structure.
+Error type 14 at Line 76: Structure has no field named "c".
+Error type 8 at Line 93: Type mismatched for return.
+----------------------------------------
+
+文件: Test/test_simple.cmm
+返回码: 0
+输出:
+Error type 14 at Line 9: Structure has no field named "n".
+----------------------------------------

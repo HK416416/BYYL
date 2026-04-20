@@ -140,15 +140,15 @@ bool is_structurally_equivalent(Type* t1, Type* t2) {
             return t1->u.basic == t2->u.basic;
             
         case TYPE_KIND_ARRAY:
-            // 数组类型：比较元素类型和大小
-            return is_structurally_equivalent(t1->u.array.elem, t2->u.array.elem) &&
-                   t1->u.array.size == t2->u.array.size;
+            // 数组类型：根据 requirements 的数组例外规则，仅比较元素类型（递归）和维度结构，
+            // 不比较具体的数组大小值。
+            return is_structurally_equivalent(t1->u.array.elem, t2->u.array.elem);
             
-        case TYPE_KIND_STRUCTURE:
+        case TYPE_KIND_STRUCTURE: {
             // 结构体类型：比较域列表
             FieldList* f1 = t1->u.structure;
             FieldList* f2 = t2->u.structure;
-            
+
             while (f1 != NULL && f2 != NULL) {
                 // 域名可以不同，但类型必须结构等价
                 if (!is_structurally_equivalent(f1->type, f2->type)) {
@@ -157,9 +157,10 @@ bool is_structurally_equivalent(Type* t1, Type* t2) {
                 f1 = f1->tail;
                 f2 = f2->tail;
             }
-            
+
             // 两个列表必须同时结束
             return f1 == NULL && f2 == NULL;
+        }
     }
     
     return false;

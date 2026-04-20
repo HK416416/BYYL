@@ -12,7 +12,7 @@ Lab1 — 词法与语法分析器（C-- 子集）
 	- `main.c` — AST 实现与程序入口
 	- `Makefile` — 本地构建脚本（直接调用 flex/bison/gcc）
 - Test/: 示例输入文件（.cmm）
-- report.md: 实验报告（实现方法、遇到的问题与测试说明）
+- report.pdf: 实验报告（实现方法、遇到的问题与测试说明）
 
 快速使用
 ----
@@ -26,11 +26,9 @@ make        # 生成 lex.yy.c, syntax.tab.c 并编译为可执行 parser
 
 输出说明
 ----
-- 正常情况下，程序在 stdout 打印 AST（前序遍历，两个空格缩进）。
-- 词法/语法错误按评分要求输出到 stdout，格式示例：
-	- `Error type A at Line N: ...`（词法错误）
-	- `Error type B at Line N: ...`（语法错误）
-- 若发生任意错误，程序不会打印 AST（由全局 `has_error` 控制）.
+- 正常情况下，程序在没有输出。
+- 错误按评分要求输出到 stdout，格式示例：
+	- `Error type x at Line N: ...`
 
 
 

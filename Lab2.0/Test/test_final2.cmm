@@ -1,0 +1,32 @@
+/* test_final2.cmm: 结构等价反例 - 成员数量/类型/顺序不同，应触发错误类型5 */
+struct S1 {
+    int a;
+    float b;
+};
+
+struct S2 {
+    float c;        // 类型不同
+    int d;
+};
+
+struct S3 {
+    int e;
+    float f;
+    int g;         // 额外成员
+};
+
+struct S4 {
+    int h;
+};                  // 成员数量不同
+
+int main() {
+    struct S1 s1;
+    struct S2 s2;
+    struct S3 s3;
+    struct S4 s4;
+    
+    s1 = s2;        // 错误类型5：成员类型顺序不同
+    s1 = s3;        // 错误类型5：成员数量不同
+    s1 = s4;        // 错误类型5：成员数量不同
+    return 0;
+}

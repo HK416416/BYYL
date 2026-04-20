@@ -335,17 +335,14 @@ void analyze_struct_specifier(SemanticContext* context, Node* node, Type** type)
                             char* field_name = NULL;
                             Type* field_type = NULL;
                             
-                            // 分析VarDec获取域名和类型
+                            // 分析VarDec获取域名和完整类型（包括数组维度）
                             Node* var_dec = get_child(dec, 0);
-                            if (var_dec != NULL) {
-                                // TODO: 实现analyze_var_dec_for_field
-                                // 简化：假设是简单变量
-                                if (is_node_name(var_dec, "VarDec")) {
-                                    Node* id_node = get_child(var_dec, 0);
-                                    if (id_node != NULL && is_node_name(id_node, "ID")) {
-                                        field_name = get_id_value(id_node);
-                                        field_type = copy_type(field_base_type);
-                                    }
+                            if (var_dec != NULL && is_node_name(var_dec, "VarDec")) {
+                                Type* full_field_type = NULL;
+                                analyze_var_dec(context, var_dec, field_base_type, &field_name, &full_field_type);
+                                if (field_name != NULL) {
+                                    // 如果 analyze_var_dec 返回了完整类型（如数组），使用之；否则使用基类型副本
+                                    field_type = (full_field_type != NULL) ? full_field_type : copy_type(field_base_type);
                                 }
                             }
                             
@@ -622,6 +619,37 @@ void analyze_stmt(SemanticContext* context, Node* node) {
             }
         }
     }
+    // 处理IF语句: IF LP Exp RP Stmt 或 IF LP Exp RP MatchedStmt ELSE MatchedStmt
+    else if (num_children >= 5 && is_node_name(first_child, "IF")) {
+        // 第三个子节点是条件表达式 (索引2: IF, LP, Exp, RP, ...)
+        Node* exp_node = get_child(node, 2);
+        if (exp_node != NULL && is_node_name(exp_node, "Exp")) {
+            ExpTypeInfo exp_info = analyze_exp(context, exp_node);
+            
+            // 检查条件表达式类型是否为int
+            if (exp_info.type != NULL) {
+                if (!(exp_info.type->kind == TYPE_KIND_BASIC && exp_info.type->u.basic == TYPE_INT)) {
+                    report_semantic_error(context, ERROR_TYPE_MISMATCH_OPERANDS,
+                                        get_node_line(exp_node),
+                                        "Condition expression must be int type");
+                }
+            }
+        }
+        
+        // 分析then分支 (索引4)
+        Node* then_stmt = get_child(node, 4);
+        if (then_stmt != NULL) {
+            analyze_stmt(context, then_stmt);
+        }
+        
+        // 如果有else分支 (7个子节点)，分析else分支 (索引6)
+        if (num_children == 7) {
+            Node* else_stmt = get_child(node, 6);
+            if (else_stmt != NULL) {
+                analyze_stmt(context, else_stmt);
+            }
+        }
+    }
 }
 
 /* 分析DefList节点 */
@@ -763,6 +791,10 @@ ExpTypeInfo analyze_exp(SemanticContext* context, Node* node) {
     
     Node* first_child = get_child(node, 0);
     
+    // 调试输出（已注释）
+    // printf("DEBUG analyze_exp: node name=%s, num_children=%d, first_child name=%s\n",
+    //        node->name, num_children, first_child ? first_child->name : "NULL");
+    
     // 处理数组访问：Exp LB Exp RB
     if (num_children == 4 && is_node_name(get_child(node, 1), "LB") && is_node_name(get_child(node, 3), "RB")) {
         Node* left = get_child(node, 0);
@@ -887,7 +919,7 @@ ExpTypeInfo analyze_exp(SemanticContext* context, Node* node) {
             field = field->tail;
         }
         
-        if (!found) {
+        if (found == 0) {
             // 报告未定义的域错误（错误类型14）
             report_semantic_error(context, ERROR_UNDEFINED_FIELD, info.line,
                                 "Structure has no field named \"%s\"", field_name);
@@ -933,13 +965,15 @@ ExpTypeInfo analyze_exp(SemanticContext* context, Node* node) {
         else if (op_node != NULL && op_node->is_terminal) {
             // 其它二元操作符：算术/关系/逻辑等
             const char* op_name = op_node->name;
+            // printf("DEBUG: Binary op name = %s\n", op_name);
             if (strcmp(op_name, "PLUS") == 0 || strcmp(op_name, "MINUS") == 0 ||
                 strcmp(op_name, "STAR") == 0 || strcmp(op_name, "DIV") == 0 ||
                 strcmp(op_name, "MOD") == 0 ||
                 strcmp(op_name, "LT") == 0 || strcmp(op_name, "LE") == 0 ||
                 strcmp(op_name, "GT") == 0 || strcmp(op_name, "GE") == 0 ||
                 strcmp(op_name, "EQ") == 0 || strcmp(op_name, "NE") == 0 ||
-                strcmp(op_name, "AND") == 0 || strcmp(op_name, "OR") == 0) {
+                strcmp(op_name, "AND") == 0 || strcmp(op_name, "OR") == 0 ||
+                strcmp(op_name, "RELOP") == 0) {
 
                 // 分析左表达式
                 ExpTypeInfo left_info = analyze_exp(context, first_child);

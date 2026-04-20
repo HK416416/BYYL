@@ -1,0 +1,94 @@
+/* test_final6.cmm: 综合测试 - 覆盖多个错误类型 */
+struct S {
+    int a;
+    float b;
+};
+
+struct T {
+    int c;
+    float d;
+};
+
+struct U {
+    float e;
+    int f;
+};
+
+
+int foo(int x, float y) {
+    return x;
+}
+
+int bar(struct S s) {
+    return s.a;
+}
+
+int main() {
+    int i;
+    float f;
+    struct S s1;
+    struct T t1;
+    struct U u1;
+    int arr[10];
+    struct S s2;
+    struct Unknown unknown;
+    
+    // 错误类型1：使用未定义变量
+    i = undefined_var;
+    
+    // 错误类型5：赋值类型不匹配（int vs float）
+    i = f;
+    
+    // 错误类型5：结构体赋值，但成员顺序不同（S vs U）
+    s1 = u1;
+    
+    // 错误类型6：赋值左边为右值
+    3 = i;
+    
+    // 错误类型7：操作数类型不匹配（int + float）
+    i = i + f;
+    
+    // 错误类型8：返回类型不匹配（函数foo返回int，但返回float）
+    // 注意：需要在一个返回语句中
+    // 我们将创建一个返回float的函数
+    // 但为了简单，直接在main中测试？错误类型8是针对函数返回的。
+    // 我们稍后添加一个函数。
+    
+    // 错误类型9：函数参数不匹配（参数数量）
+    foo(i);
+    
+    // 错误类型9：函数参数类型不匹配（结构体）
+    bar(t1);        // 应无错误，因为S和T结构等价
+    
+    // 错误类型10：对非数组变量使用[]
+    i[0] = 5;
+    
+    // 错误类型11：对普通变量使用函数调用
+    i();
+    
+    // 错误类型12：数组索引非整数
+    arr[f] = 0;
+    
+    // 错误类型13：对非结构体变量使用.
+    i.a = 0;
+    
+    // 错误类型14：访问结构体中未定义的域
+    s2.c = 0;
+    
+    // 错误类型15：同一结构体中域名重复定义（在定义时）
+    // 无法在单个文件中测试，因为需要定义结构体。
+    // 跳过。
+    
+    // 错误类型16：结构体名与变量名重复
+    // 跳过。
+    
+    // 错误类型17：使用未定义的结构体定义变量
+    // struct Unknown unknown; 已声明
+    
+    return 0;
+}
+
+// 辅助函数用于测试错误类型8
+float test_return() {
+    return 1;       // 错误类型8：返回int但函数声明为float
+}

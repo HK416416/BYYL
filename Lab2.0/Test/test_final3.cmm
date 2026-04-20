@@ -1,0 +1,33 @@
+/* test_final3.cmm: 数组例外规则测试 - 数组大小不同但基类型和维数相同，应视为等价 */
+struct Inner {
+    int val;
+    float f;
+};
+
+struct Container1 {
+    struct Inner arr[5][3];   // 二维数组，大小 5x3
+};
+
+struct Container2 {
+    struct Inner arr[10][2];  // 二维数组，大小 10x2，但基类型和维数相同
+};
+
+struct Container3 {
+    struct Inner arr[5];      // 一维数组，维数不同
+};
+
+struct Container4 {
+    int arr[5][3];            // 基类型不同
+};
+
+int main() {
+    struct Container1 c1;
+    struct Container2 c2;
+    struct Container3 c3;
+    struct Container4 c4;
+    
+    c1 = c2;        // 应无错误：数组大小不同但基类型和维数相同
+    c1 = c3;        // 错误类型5：维数不同（二维 vs 一维）
+    c1 = c4;        // 错误类型5：基类型不同（struct Inner vs int）
+    return 0;
+}

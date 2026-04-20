@@ -155,9 +155,9 @@ int main(int argc, char** argv) {
         semantic_analysis(root);
         
         /* 如果语义分析也没有错误，打印AST */
-        if (!has_error) {
-            print_tree(root, 0);
-        }
+        //if (!has_error) {
+        //    print_tree(root, 0);
+        //}
         //print_tree(root, 0);
         free_node(root);
     }
