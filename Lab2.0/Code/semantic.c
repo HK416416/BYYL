@@ -187,7 +187,9 @@ void analyze_ext_def(SemanticContext* context, Node* node) {
                                             get_node_line(var_dec),
                                             "Redefined variable \"%s\"", var_name);
                     } else {
-                        Symbol* var_symbol = new_variable_symbol(var_name, copy_type(base_type), get_node_line(var_dec));
+                        // 使用 var_type（包含数组维度等完整类型信息），如果为 NULL 则回退到 base_type
+                        Type* final_type = (var_type != NULL) ? var_type : copy_type(base_type);
+                        Symbol* var_symbol = new_variable_symbol(var_name, final_type, get_node_line(var_dec));
                         insert_symbol(context->global_table, var_symbol);
                     }
                 }
