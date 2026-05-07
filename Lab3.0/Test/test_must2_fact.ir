@@ -15,20 +15,20 @@ t5 := v1 * t4
 RETURN t5
 LABEL label3 :
 FUNCTION main :
-READ t1
-v2 := t1
-t2 := #1
-IF v2 > t2 GOTO label4
+READ t6
+v2 := t6
+t7 := #1
+IF v2 > t7 GOTO label4
 GOTO label5
 LABEL label4 :
 ARG v2
-t3 := CALL fact
-v3 := t3
+t8 := CALL fact
+v3 := t8
 GOTO label6
 LABEL label5 :
-t4 := #1
-v3 := t4
+t9 := #1
+v3 := t9
 LABEL label6 :
 WRITE v3
-t5 := #0
-RETURN t5
+t10 := #0
+RETURN t10

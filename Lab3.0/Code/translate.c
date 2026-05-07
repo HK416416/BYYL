@@ -188,8 +188,9 @@ static TransExp trans_exp(Node* node) {
         if (sym && sym->kind == SYMBOL_VARIABLE) {
             r.type = sym->u.variable.type;
             if (r.type && r.type->kind == TYPE_KIND_ARRAY) {
-                if (is_array_param_var(name)) { r.place = strdup(irn); r.is_addr = 1; }
-                else { char* t = new_temp(); fprintf(ir_out, "%s := &%s\n", t, irn); r.place = t; r.is_addr = 1; }
+                /* DEC-allocated array: variable name IS the base address.
+                   Array param: variable already holds the address. */
+                r.place = strdup(irn); r.is_addr = 1;
             } else { r.place = strdup(irn); r.is_addr = 0; }
         } else { r.place = strdup(irn); r.is_addr = 0; }
         return r;
@@ -283,7 +284,7 @@ static TransExp trans_exp(Node* node) {
                 if (as && as->kind == SYMBOL_VARIABLE && as->u.variable.type && as->u.variable.type->kind == TYPE_KIND_ARRAY) {
                     const char* ir = lookup_ir_name(aid); if (!ir) ir = register_variable(aid);
                     aps[ac-1] = (char*)malloc(strlen(ir)+8);
-                    sprintf(aps[ac-1], "&%s", ir);
+                    sprintf(aps[ac-1], "%s", ir);
                 } else {
                     TransExp arg = trans_exp(ae);
                     if (arg.is_addr) {
@@ -588,7 +589,7 @@ static void trans_function(Node* ext_def) {
     char* fn = get_id(id);
     if (!fn) return;
     fprintf(ir_out, "FUNCTION %s :\n", fn);
-    temp_counter = 0; dec_count = 0;
+    dec_count = 0;
     int np = fd->u.nonterm.num_children;
     if (np == 4) {
         Node* vl = get_child(fd, 2);
