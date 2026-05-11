@@ -1,0 +1,71 @@
+FUNCTION test_and :
+PARAM v1
+PARAM v2
+t1 := #0
+IF v1 > t1 GOTO label4
+GOTO label2
+LABEL label4 :
+t2 := #0
+IF v2 > t2 GOTO label1
+GOTO label2
+LABEL label1 :
+t3 := #1
+RETURN t3
+GOTO label3
+LABEL label2 :
+t4 := #0
+RETURN t4
+LABEL label3 :
+FUNCTION test_or :
+PARAM v3
+PARAM v4
+t5 := #0
+IF v3 > t5 GOTO label5
+GOTO label8
+LABEL label8 :
+t6 := #0
+IF v4 > t6 GOTO label5
+GOTO label6
+LABEL label5 :
+t7 := #1
+RETURN t7
+GOTO label7
+LABEL label6 :
+t8 := #0
+RETURN t8
+LABEL label7 :
+FUNCTION test_not :
+PARAM v5
+t9 := #0
+IF v5 > t9 GOTO label10
+GOTO label9
+LABEL label9 :
+t10 := #1
+RETURN t10
+GOTO label11
+LABEL label10 :
+t11 := #0
+RETURN t11
+LABEL label11 :
+FUNCTION main :
+t12 := #5
+v6 := t12
+t13 := #3
+t14 := #0 - t13
+v7 := t14
+ARG v7
+ARG v6
+t15 := CALL test_and
+v8 := t15
+WRITE v8
+ARG v7
+ARG v6
+t16 := CALL test_or
+v8 := t16
+WRITE v8
+ARG v7
+t17 := CALL test_not
+v8 := t17
+WRITE v8
+t18 := #0
+RETURN t18

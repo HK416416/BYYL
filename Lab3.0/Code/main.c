@@ -151,21 +151,17 @@ int main(int argc, char** argv) {
     yyparse();
     fclose(f);
     
-    /* 如果没有词法或语法错误，进行语义分析 */
     if (!has_error && root) {
-        /* 执行语义分析并保留上下文 */
         SemanticContext* ctx = semantic_analysis_with_context(root);
         
-        /* 如果语义分析也没有错误，进行中间代码翻译 */
         if (!has_error && ctx) {
             FILE* out = fopen(argv[2], "w");
             if (out) {
                 int ret = translate_program(ctx, root, out);
                 fclose(out);
                 if (ret != 0) {
-                    /* Translation error — re-read and output error message */
-                    /* translate_program already wrote error to file,
-                       but we need to handle the "Cannot translate" case */
+                    /* 翻译失败，错误已通过printf输出到stdout，删除.ir文件 */
+                    //remove(argv[2]);
                 }
             } else {
                 printf("Cannot open output file: %s\n", argv[2]);
@@ -175,6 +171,5 @@ int main(int argc, char** argv) {
         if (ctx) destroy_semantic_context(ctx);
         free_node(root);
     }
-    /* Always exit with status 0 per testing platform requirement */
     return 0;
 }

@@ -590,6 +590,8 @@ static void trans_function(Node* ext_def) {
     if (!fn) return;
     fprintf(ir_out, "FUNCTION %s :\n", fn);
     dec_count = 0;
+    /* 清空源名称→IR名称映射，使各函数参数获得全局唯一v编号 */
+    var_name_count = 0;
     int np = fd->u.nonterm.num_children;
     if (np == 4) {
         Node* vl = get_child(fd, 2);
@@ -632,7 +634,7 @@ int translate_program(SemanticContext* ctx, Node* root, FILE* output) {
     if (!ctx || !root || !output) return 1;
     ir_out = output; g_symtab = ctx->global_table; error_flag = 0;
     var_name_count = 0; var_counter = 0;
-    if (check_struct_in_node(root)) { fprintf(output, "Cannot translate: Code contains struct type variables or struct parameters.\n"); return 1; }
+    if (check_struct_in_node(root)) { printf("Cannot translate: Code contains struct type variables or struct parameters.\n"); return 1; }
     Node* el = get_child(root, 0);
     Node* cur = el;
     while (cur && is_name(cur, "ExtDefList")) {
@@ -646,7 +648,7 @@ int translate_program(SemanticContext* ctx, Node* root, FILE* output) {
                     Node* vl = get_child(fd, 2); Node* vc = vl;
                     while (vc && is_name(vc, "VarList")) {
                         if (is_multi_dim_array_param(get_child(vc, 0))) {
-                            fprintf(output, "Cannot translate: Code contains variables of multi-dimensional array type or parameters of array type.\n");
+                            printf("Cannot translate: Code contains variables of multi-dimensional array type or parameters of array type.\n");
                             return 1;
                         }
                         if (vc->u.nonterm.num_children > 1) vc = get_child(vc, 2); else vc = NULL;

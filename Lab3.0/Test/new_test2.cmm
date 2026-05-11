@@ -1,0 +1,38 @@
+/* new_test2: 多参数函数 + 算术优先级 + 一维数组值传递测试 */
+int sum3(int x, int y, int z)
+{
+    return (x + y + z);
+}
+
+int calc(int a, int b)
+{
+    /* 测试算术优先级: 2*a + b*3 - (a-b)*2 */
+    return (2 * a + b * 3 - (a - b) * 2);
+}
+
+int use_array(int arr[5])
+{
+    /* 通过传地址的数组参数读写 */
+    arr[0] = arr[0] + 1;
+    arr[1] = arr[1] * 2;
+    return (arr[0] + arr[1]);
+}
+
+int main()
+{
+    int m, n, p, r;
+    int nums[5];
+    m = 10;
+    n = 20;
+    p = 30;
+    r = sum3(m, n, p);
+    write(r);
+    r = calc(5, 3);
+    write(r);
+    nums[0] = 1;
+    nums[1] = 2;
+    nums[2] = 0;
+    r = use_array(nums);
+    write(r);
+    return 0;
+}

@@ -1,0 +1,38 @@
+/* new_test1: 布尔表达式 AND/OR/NOT 综合测试 */
+int test_and(int x, int y)
+{
+    if (x > 0 && y > 0)
+        return 1;
+    else
+        return 0;
+}
+
+int test_or(int x, int y)
+{
+    if (x > 0 || y > 0)
+        return 1;
+    else
+        return 0;
+}
+
+int test_not(int x)
+{
+    if (!(x > 0))
+        return 1;
+    else
+        return 0;
+}
+
+int main()
+{
+    int a, b, r;
+    a = 5;
+    b = -3;
+    r = test_and(a, b);
+    write(r);
+    r = test_or(a, b);
+    write(r);
+    r = test_not(b);
+    write(r);
+    return 0;
+}

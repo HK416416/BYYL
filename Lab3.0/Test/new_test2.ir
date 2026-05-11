@@ -1,0 +1,94 @@
+FUNCTION sum3 :
+PARAM v1
+PARAM v2
+PARAM v3
+t1 := v1 + v2
+t2 := t1 + v3
+RETURN t2
+FUNCTION calc :
+PARAM v4
+PARAM v5
+t3 := #2
+t4 := t3 * v4
+t5 := #3
+t6 := v5 * t5
+t7 := t4 + t6
+t8 := v4 - v5
+t9 := #2
+t10 := t8 * t9
+t11 := t7 - t10
+RETURN t11
+FUNCTION use_array :
+PARAM v6
+t12 := #0
+t13 := t12 * #4
+t14 := v6 + t13
+t15 := #1
+t16 := *t14
+t17 := t16 + t15
+t18 := #0
+t19 := t18 * #4
+t20 := v6 + t19
+*t20 := t17
+t21 := #1
+t22 := t21 * #4
+t23 := v6 + t22
+t24 := #2
+t25 := *t23
+t26 := t25 * t24
+t27 := #1
+t28 := t27 * #4
+t29 := v6 + t28
+*t29 := t26
+t30 := #0
+t31 := t30 * #4
+t32 := v6 + t31
+t33 := #1
+t34 := t33 * #4
+t35 := v6 + t34
+t36 := *t32
+t37 := *t35
+t38 := t36 + t37
+RETURN t38
+FUNCTION main :
+DEC v11 20
+t39 := #10
+v7 := t39
+t40 := #20
+v8 := t40
+t41 := #30
+v9 := t41
+ARG v9
+ARG v8
+ARG v7
+t42 := CALL sum3
+v10 := t42
+WRITE v10
+t43 := #5
+t44 := #3
+ARG t44
+ARG t43
+t45 := CALL calc
+v10 := t45
+WRITE v10
+t46 := #1
+t47 := #0
+t48 := t47 * #4
+t49 := v11 + t48
+*t49 := t46
+t50 := #2
+t51 := #1
+t52 := t51 * #4
+t53 := v11 + t52
+*t53 := t50
+t54 := #0
+t55 := #2
+t56 := t55 * #4
+t57 := v11 + t56
+*t57 := t54
+ARG v11
+t58 := CALL use_array
+v10 := t58
+WRITE v10
+t59 := #0
+RETURN t59
