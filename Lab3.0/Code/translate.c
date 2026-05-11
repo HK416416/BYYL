@@ -399,7 +399,7 @@ static TransExp trans_exp(Node* node) {
 
     /* DOT */
     if (nc == 3 && is_name(get_child(node, 1), "DOT")) {
-        fprintf(ir_out, "Cannot translate: Code contains struct type variables or struct parameters.\n");
+        printf("Cannot translate: Code contains struct type variables or struct parameters.\n");
         error_flag = 1; return r;
     }
     return r;
