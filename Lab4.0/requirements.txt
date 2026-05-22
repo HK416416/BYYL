@@ -1,0 +1,283 @@
+```markdown
+# 编译原理实验：目标代码生成
+## 1. 实验目标
+实现一个 C-- 语言中间代码到 MIPS32 汇编代码的翻译器。该程序读取符合实验三规范的三地址码形式中间代码，输出可在 SPIM Simulator 上正确运行的 MIPS32 汇编代码。通过本实验，掌握编译器后端的核心技术：线形 IR 指令选择、寄存器分配算法、MIPS 栈管理、控制流翻译以及基本窥孔优化，完成完整 C-- 编译器的最后一步构建。
+
+## 2. 总体假设（必做部分）
+实验必须满足以下假设（取自教材 `5.3.1` 节），输入的中间代码均由符合这些假设的 C-- 源代码生成：
+1. **输入正确性**：输入中间代码不包含任何词法、语法或语义错误，所有函数必有 `RETURN` 语句。
+2. **无复杂常量**：中间代码中不会出现八进制/十六进制整型常数、浮点型常数或浮点型变量。
+3. **受限类型**：不会出现结构体类型的变量，不会出现高于一维的数组。
+4. **函数参数限制**：任何函数参数都只能为简单变量，不能是数组或结构体。
+5. **无全局变量**：没有全局变量的使用，并且所有变量均不重名，变量存储空间分配在对应函数的活动记录中。
+6. **函数返回类型限制**：函数不会返回结构体或数组类型的值。
+7. **函数定义方式**：函数只会进行一次定义（没有函数声明）。
+8. **整型范围**：所有整型常数都在 16 位整数范围内，可直接用于 `addi` 等包含立即数的指令。
+
+## 3. 必做功能
+基于上述假设，程序必须能够正确翻译以下中间代码特性：
+### 3.1 线形 IR 指令选择（宏扩展）
+- 支持所有基础中间代码指令到 MIPS32 指令的一一映射，包括：
+  - 赋值指令：`x := y`、`x := y op z`（`+` `-` `*` `/`）、`x := #k`
+  - 内存操作：`x := &y`、`x := *y`、`*x := y`
+  - 控制流：`LABEL x:`、`GOTO x`、`IF x relop y GOTO z`
+  - 函数相关：`FUNCTION f:`、`PARAM x`、`ARG x`、`x := CALL f`、`RETURN x`
+  - 其他：`DEC x size`、`READ x`、`WRITE x`
+- 利用 MIPS 基址寻址优化一维数组访问（如将 `a[i]` 的地址计算合并为单条 `lw`/`sw` 指令）。
+
+### 3.2 寄存器分配
+- 至少实现**朴素寄存器分配算法**或**局部寄存器分配算法**：
+  - 朴素分配：变量默认存内存，运算时加载到寄存器，结果立即写回
+  - 局部分配：在基本块内复用寄存器，基本块结束时将修改过的变量写回内存
+- 正确管理 MIPS 通用寄存器，避免寄存器冲突。
+
+### 3.3 MIPS 栈管理
+- 实现函数调用的完整栈帧管理：
+  - 调用者序列：保存调用者寄存器、传递参数（前 4 个用 `$a0-$a3`，多余用栈）、执行 `jal` 调用、恢复寄存器与栈指针
+  - 被调用者序列（Prologue）：保存返回地址 `$ra`、保存被调用者寄存器、设置栈帧指针 `$fp`（可选）
+  - 被调用者序列（Epilogue）：恢复寄存器、恢复栈指针、执行 `jr $ra` 返回
+- 为局部变量、临时变量和溢出变量在栈上分配空间。
+
+### 3.4 控制流翻译
+- 正确翻译条件分支（`if`）和循环（`while`）对应的中间代码，生成 MIPS 条件跳转和无条件跳转指令
+- 支持基本块重排优化，减少冗余跳转指令。
+
+### 3.5 预定义函数支持
+- 实现 `read()` 函数：调用 SPIM 系统调用读取整数，返回值存入 `$v0`
+- 实现 `write(x)` 函数：调用 SPIM 系统调用输出整数，返回值固定为 0 存入 `$v0`。
+
+### 3.6 基本窥孔优化
+- 实现至少一种窥孔优化：
+  - 冗余 `load/store` 指令消除
+  - 连续跳转指令优化（如 `j L1; L1: j L2` → `j L2`）
+  - 死代码消除（删除不可达指令）。
+
+## 4. 输入与输出格式
+### 4.1 输入
+- 一个文本文件，内容为符合实验三输出规范的三地址码中间代码
+- 程序通过命令行参数接收输入文件名和输出文件名：
+  ```
+  ./cc input.ir output.s
+  ```
+
+### 4.2 输出
+- 输出文件为 MIPS32 汇编代码，后缀名为 `.s`，可直接在 SPIM Simulator 上运行
+- 若输入包含不支持的特性，输出相应错误提示：
+  ```
+  Error: Struct type is not supported.
+  Error: Multi-dimensional array is not supported.
+  Error: Array as function parameter is not supported.
+  ```
+
+### 4.3 MIPS32 汇编代码规范
+- 代码分为数据段（`.data`）和代码段（`.text`）
+- 必须声明 `.globl main` 作为程序入口
+- 支持 SPIM 常用伪指令（`li`、`la`、`move` 等）
+- 注释以 `#` 开头，可添加必要的注释提高可读性
+- 系统调用遵循 SPIM 规范（`$v0` 存放系统调用号，参数存入 `$a0-$a3`）。
+
+## 5. 样例参考(输出的运行结果一致即可，汇编代码不需要完全一致)
+```markdown
+# 实验测试样例汇总
+以下为教材第5章中给出的必做测试样例。
+---
+## 一、必做部分样例（5.3.6节）
+### 样例1：斐波那契数列
+**输入**（中间代码）：
+```
+FUNCTION main:
+READ t1
+v1 := t1
+v2 := #0
+v3 := #1
+v4 := #0
+LABEL label1:
+IF v4 < v1 GOTO label2
+GOTO label3
+LABEL label2:
+t2 := v2 + v3
+WRITE v3
+v2 := v3
+v3 := t2
+v4 := v4 + #1
+GOTO label1
+LABEL label3:
+RETURN #0
+```
+
+**输出**（MIPS32 汇编代码）：
+```
+.data
+_prompt: .asciiz "Enter an integer:"
+_ret: .asciiz "\n"
+.globl main
+.text
+
+read:
+    li $v0, 4
+    la $a0, _prompt
+    syscall
+    li $v0, 5
+    syscall
+    jr $ra
+
+write:
+    li $v0, 1
+    syscall
+    li $v0, 4
+    la $a0, _ret
+    syscall
+    move $v0, $0
+    jr $ra
+
+main:
+    li $t5, 0
+    li $t4, 1
+    li $t3, 0
+    addi $sp, $sp, -4
+    sw $ra, 0($sp)
+    jal read
+    lw $ra, 0($sp)
+    addi $sp, $sp, 4
+    move $t1, $v0
+    move $t2, $t1
+label1:
+    blt $t3, $t2, label2
+    j label3
+label2:
+    add $t1, $t5, $t4
+    move $a0, $t4
+    addi $sp, $sp, -4
+    sw $ra, 0($sp)
+    jal write
+    lw $ra, 0($sp)
+    addi $sp, $sp, 4
+    move $t5, $t4
+    move $t4, $t1
+    addi $t1, $t3, 1
+    move $t3, $t1
+    j label1
+label3:
+    move $v0, $0
+    jr $ra
+```
+
+---
+### 样例2：阶乘函数
+**输入**（中间代码）：
+```
+FUNCTION fact:
+PARAM v1
+IF v1 == #1 GOTO label1
+GOTO label2
+LABEL label1:
+RETURN v1
+LABEL label2:
+t1 := v1 - #1
+ARG t1
+t2 := CALL fact
+t3 := v1 * t2
+RETURN t3
+
+FUNCTION main:
+READ t4
+v2 := t4
+IF v2 > #1 GOTO label3
+GOTO label4
+LABEL label3:
+ARG v2
+t5 := CALL fact
+v3 := t5
+GOTO label5
+LABEL label4:
+v3 := #1
+LABEL label5:
+WRITE v3
+RETURN #0
+```
+
+**输出**（MIPS32 汇编代码）：
+```
+.data
+_prompt: .asciiz "Enter an integer:"
+_ret: .asciiz "\n"
+.globl main
+.text
+
+read:
+    li $v0, 4
+    la $a0, _prompt
+    syscall
+    li $v0, 5
+    syscall
+    jr $ra
+
+write:
+    li $v0, 1
+    syscall
+    li $v0, 4
+    la $a0, _ret
+    syscall
+    move $v0, $0
+    jr $ra
+
+main:
+    addi $sp, $sp, -4
+    sw $ra, 0($sp)
+    jal read
+    lw $ra, 0($sp)
+    addi $sp, $sp, 4
+    move $t1, $v0
+    li $t3, 1
+    bgt $t1, $t3, label6
+    j label7
+label6:
+    move $a0, $t1
+    addi $sp, $sp, -4
+    sw $ra, 0($sp)
+    jal fact
+    lw $ra, 0($sp)
+    addi $sp, $sp, 4
+    move $t2, $v0
+    j label8
+label7:
+    li $t2, 1
+label8:
+    move $a0, $t2
+    addi $sp, $sp, -4
+    sw $ra, 0($sp)
+    jal write
+    lw $ra, 0($sp)
+    addi $sp, $sp, 4
+    move $v0, $0
+    jr $ra
+
+fact:
+    li $t4, 1
+    beq $a0, $t4, label1
+    j label2
+label1:
+    move $v0, $a0
+    jr $ra
+label2:
+    addi $sp, $sp, -8
+    sw $a0, ($sp)
+    sw $ra, 4($sp)
+    sub $a0, $a0, 1
+    jal fact
+    lw $a0, ($sp)
+    lw $ra, 4($sp)
+    addi $sp, $sp, 8
+    mul $v0, $v0, $a0
+    jr $ra
+```
+
+---
+## 二、样例说明
+| 样例编号 | 类型         | 主要测试特性                           |
+|----------|--------------|----------------------------------------|
+| 必做1    | 基础控制流   | 循环结构、`read/write` 系统调用、寄存器分配 |
+| 必做2    | 函数与递归   | 函数定义、参数传递、递归调用、栈帧管理 |
+
+> 注意：输出的汇编代码只要能在 SPIM Simulator 上正确运行并得到预期结果即可，寄存器使用和栈管理方式不做强制检查。
+```
