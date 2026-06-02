@@ -1,0 +1,97 @@
+Lab4 — 目标代码生成器（C-- 子集 → MIPS32）
+
+简介
+----
+本目录实现了一个 C-- 语言中间代码到 MIPS32 汇编代码的翻译器——即编译器后端的代码生成器。在前三个实验（词法/语法分析、语义分析、中间代码生成）的基础上，读取符合实验三规范的三地址码形式中间代码，输出可在 SPIM Simulator 上正确运行的 MIPS32 汇编代码。必做部分覆盖：线形 IR 指令选择（宏扩展）、朴素寄存器分配、MIPS 栈管理、控制流翻译、预定义函数 `read`/`write` 及基本窥孔优化。
+
+目录结构
+----
+- Code/: 源代码和 Makefile
+	- `lexical.l` — Flex 词法文件
+	- `syntax.y` — Bison 语法文件
+	- `main.c` — AST 实现、语义分析入口、IR 生成入口与汇编生成入口（两阶段流水线）
+	- `semantic.h/c` — 语义分析接口与主逻辑
+	- `symbol.h/c` — 符号表实现
+	- `type.h/c` — 类型系统与结构等价判定
+	- `translate.h/c` — 中间代码生成（→ .ir 临时文件）
+	- `codegen.h` — 目标代码生成接口
+	- `codegen.c` — 目标代码生成核心实现（IR 解析 → MIPS32 汇编）
+	- `Makefile` — 本地构建脚本（直接调用 flex/bison/gcc）
+
+快速使用
+----
+在 `Code` 下执行：
+
+```bash
+cd Code
+make                                    # 编译生成 parser
+./parser input.cmm output.s             # 翻译单个 C-- 源文件到 MIPS32 汇编
+```
+
+生成的 `.s` 文件可直接在 SPIM Simulator 中运行：
+```bash
+spim -file output.s                     # 命令行版
+# 或在 QtSPIM GUI 中 File → Load File
+```
+
+输出说明
+----
+- 正常情况下，输出文件（`.s`）为完整的 MIPS32 汇编代码，包含 `.data` 段（`_prompt`、`_ret` 字符串）和 `.text` 段（`read`、`write`、各用户函数）。
+- 声明 `.globl main` 作为 SPIM 程序入口。
+- 支持 SPIM 常用伪指令（`li`、`la`、`move`、`addiu`、`addu`、`subu`、`mul`、`div`、`mflo` 等）。
+- 遇到不支持的特性（结构体、多维数组参数等）时，**仅向 stdout** 输出错误信息，不生成 `.s` 文件。
+
+### MIPS32 汇编代码规范
+
+| 项目 | 说明 |
+|------|------|
+| 数据段 | `.data` 段，含 `_prompt`（提示字符串）、`_ret`（换行符） |
+| 代码段 | `.text` 段，含 `.globl main` 声明 |
+| 预定义函数 | `read`（syscall 4 + 5）、`write`（syscall 1 + 4） |
+| 函数 Prologue | `addiu $sp, -N` → `sw $ra, N-4($sp)` → 复制 `$a0-$a3` 到形参栈槽 |
+| 函数 Epilogue | `move $v0, ...` → `lw $ra` → `addiu $sp, N` → `jr $ra` |
+| 调用序列 | 预加载参数 → 调整 `$sp` → `move $a0-$a3` → `jal` → 恢复 → 存储返回值 |
+| 寄存器使用 | `$t0`/`$t1` 用于运算临时寄存器；`$t4-$t7` 用于调用参数暂存 |
+
+### 支持的 IR 指令到 MIPS32 映射
+
+| IR 指令 | MIPS32 翻译 |
+|---------|------------|
+| `x := #k` | `li $t0, k` → `sw $t0, off_x($sp)` |
+| `x := y` | `lw $t0, off_y($sp)` → `sw $t0, off_x($sp)` |
+| `x := y + z` | `lw $t0, y; lw $t1, z; addu $t0,$t0,$t1; sw $t0, x` |
+| `x := y + #k` | `lw $t0, y; addiu $t0,$t0,k; sw $t0, x` |
+| `x := y - z` | `lw $t0, y; lw $t1, z; subu $t0,$t0,$t1; sw $t0, x` |
+| `x := y * z` | `lw $t0, y; lw $t1, z; mul $t0,$t0,$t1; sw $t0, x` |
+| `x := y / z` | `lw $t0, y; lw $t1, z; div $t0,$t1; mflo $t0; sw $t0, x` |
+| `x := *y` | `lw $t0, y; lw $t0, 0($t0); sw $t0, x` |
+| `*x := y` | `lw $t0, x; lw $t1, y; sw $t1, 0($t0)` |
+| `LABEL L:` | `L:` |
+| `GOTO L` | `j L` |
+| `IF x relop y GOTO L` | `lw $t0,x; lw $t1,y; b<relop> $t0,$t1,L` |
+| `RETURN x` | `lw $t0,x; move $v0,$t0` → Epilogue → `jr $ra` |
+| `READ x` | `jal read` → `sw $v0, x` |
+| `WRITE x` | `lw $t0,x; move $a0,$t0; jal write` |
+| `x := CALL f` | 收集 ARG → 调用序列 → `jal f` → `sw $v0, x` |
+| `FUNCTION f:` | `f:` → Prologue |
+| `PARAM x` | Prologue 中从 `$aN` 存入栈槽位 |
+| `DEC x size` | 在 `frame_bytes` 中预留空间，Pro/Epi 自动管理 |
+
+测试用例
+----
+`Test/` 目录包含以下测试用例：
+
+| 文件 | 类型 | 测试特性 |
+|------|------|---------|
+| `test_fib.cmm` | 必做 1 | 循环结构、read/write 系统调用、朴素寄存器分配 |
+| `test_fact.cmm` | 必做 2 | 函数定义、参数传递、递归调用、栈帧管理 |
+| `test_fib.s` | 输出 | 样例 1 生成的 MIPS32 汇编（87 行） |
+| `test_fact.s` | 输出 | 样例 2 生成的 MIPS32 汇编（117 行） |
+
+实现
+----
+1. **IR 解析器**：采用逐行 tokenize 方式解析三地址码，识别 16 种 IR 指令类型
+2. **朴素寄存器分配**：全部变量栈分配，运算时 `lw`→`$t0/$t1`→运算→`sw` 写回，函数调用预加载参数到 `$t4-$t7`
+3. **函数调用序列**：预加载参数 → `addiu $sp` → 设置 `$a0-$a3` → `jal` → 恢复 `$sp/$ra` → 存储 `$v0`
+4. **常量折叠**：`addi` 立即数运算省去一次 `lw`
+5. **错误输出到 stdout**：不支持的结构体类型仅输出错误信息，不生成 `.s` 文件
