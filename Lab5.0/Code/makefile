@@ -89,9 +89,12 @@ $(PARSER): $(OBJS)
 
 -include $(OBJS:.o=.d)
 
-.PHONY: all clean run gdb
+.PHONY: all clean run gdb parser
 
 all: $(PARSER)
+
+# 新增 parser 别名目标，兼容 make parser 命令
+parser: $(PARSER)
 
 clean:
 	rm -rf $(BUILD_DIR) $(PARSER)
