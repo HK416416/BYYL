@@ -1,0 +1,73 @@
+Lab5 — 中间代码优化
+
+简介
+----
+本目录实现基于数据流分析模式的循环无关全局优化。在实验三（中间代码生成）输出的 IR 基础上，读取 `.ir` 格式的三地址码中间代码，依次执行常量传播 → 公共子表达式消除 → 复制传播 → 死代码消除的优化流水线，输出语义等价且更精简的中间代码。
+
+优化流水线
+----
+对每个函数依次执行：
+
+```
+1. 常量传播          ConstantPropagation + constant_folding     将常量值传播并折叠到 use 处
+2. 可用表达式分析    AEA merge + solve + remove                 合并、分析、消除公共子表达式
+3. 复制传播          CopyPropagation + replace_available_use    将 x := y 的 x 替换为 y
+4. 常量传播(第二轮)  同步骤1                                     经过前面优化后可能暴露新的常量
+5. 死代码消除(迭代)  LVA + remove_dead_def                      反复分析直到没有新的死代码可删
+```
+
+目录结构
+----
+- `Code/`: 源代码和 Makefile
+	- `src/task1/main.c` — 入口：IR 解析 → 优化 → IR 输出
+	- `src/task1/IR_parse/` — Flex/Bison 实现的 IR 解析器（IR 语法定义）
+	- `src/task1/IR/` — IR 数据结构、基本块划分、控制流图构建
+	- `src/task1/IR_optimize/` — 数据流分析与优化核心
+		- `solver.c` — 前向/后向迭代求解器与 worklist 求解器
+		- `live_variable_analysis.c` — 活跃变量分析（后向 May 分析）
+		- `constant_propagation.c` — 常量传播（前向，UNDEF/CONST/NAC 三态格）
+		- `available_expressions_analysis.c` — 可用表达式分析（前向 Must 分析）
+		- `copy_propagation.c` — 复制传播（前向 Must 分析）
+		- `IR_optimize.c` — 优化流水线与死代码/死块消除
+	- `include/` — 容器库（Vec/List/Map/Set）与 IR 公共头文件
+- `Test/`: 测试用例（.ir 格式输入 + .out.ir 优化后输出）
+- `docs/`: 实验文档（数据流分析、LICM、归纳变量强度削减）
+
+快速使用
+----
+在 `Code` 下执行：
+
+```bash
+cd Code
+make TASK=task1                              # 编译生成 parser_task1
+./parser_task1 input.ir                      # 优化并输出到 stdout
+./parser_task1 input.ir output.ir            # 优化并保存到文件
+```
+
+数据流分析框架
+----
+每个分析抽象为子类，提供统一的 `isForward` / `newBoundaryFact` / `newInitialFact` / `meetInto` / `transferBlock` 接口，由 [`worklist_solver`](Code/src/task1/IR_optimize/solver.c:91) 统一驱动。
+
+| 分析 | 方向 | May/Must | Fact 类型 | meet 运算 |
+|------|------|----------|-----------|----------|
+| 常量传播 CP | 前向 | Must | Map[var→CPValue] | meetValue (格交) |
+| 可用表达式 AEA | 前向 | Must | Set[expr_var] | intersect |
+| 复制传播 CopyProp | 前向 | Must | Map[def→use] | intersect |
+| 活跃变量 LVA | 后向 | May | Set[var] | union |
+
+实现
+----
+1. **后向求解器**：参照前向求解器实现 `initializeBackward`（Exit 为 Boundary）、`iterativeDoSolveBackward` 和 `worklistDoSolveBackward`
+2. **活跃变量分析**：后向 May 分析，IN = use ∪ (OUT − def)；def 不在活跃集合中即标记为死代码
+3. **常量传播**：前向，UNDEF/CONST/NAC 三态格；UNDEF∪V=V，CONST∩CONST=NAC(if different)
+4. **可用表达式分析**：前向 Must 分析，Entry OUT=∅，其余初始化为 TOP；meet→intersect
+5. **复制传播**：前向 Must 分析，记录 def→use 映射；copy_kill（双向删除）和 copy_gen（插入映射）
+
+构建与清理
+----
+```bash
+cd Code
+make TASK=task1            # 编译
+make clean TASK=task1      # 清理 build 目录和可执行文件
+make run ARG=../Test/sample3_const_fold.ir TASK=task1  # 编译并运行
+```
