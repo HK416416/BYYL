@@ -91,7 +91,7 @@
 ## 五、构建与运行
 
 ```bash
-cd Code && make
+cd Code && make parser
 ./parser input.ir output.ir
 diff input.ir output.ir
 ```

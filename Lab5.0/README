@@ -39,7 +39,7 @@ Lab5 — 中间代码优化
 
 ```bash
 cd Code
-make                                        # 编译生成 parser
+make parser                                        # 编译生成 parser
 ./parser input.ir                           # 优化并输出到 stdout
 ./parser input.ir output.ir                 # 优化并保存到文件
 ```
@@ -63,11 +63,10 @@ make                                        # 编译生成 parser
 4. **可用表达式分析**：前向 Must 分析，Entry OUT=∅，其余初始化为 TOP；meet→intersect
 5. **复制传播**：前向 Must 分析，记录 def→use 映射；copy_kill（双向删除）和 copy_gen（插入映射）
 
-构建与清理
+清理
 ----
 ```bash
 cd Code
 make                       # 编译
 make clean                 # 清理 build 目录和可执行文件
-make run ARG=../Test/sample3_const_fold.ir  # 编译并运行
 ```
