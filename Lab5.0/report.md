@@ -3,9 +3,9 @@
 | 姓 名 | 杨力泉  元杰 |
 | 学 号 | 231220069 231220082 |
 | 日 期 | 2026 年 6 月 2 日 |
-| 选做任务 | 任务1 |
+| 选做任务 | 任务1：数据流分析相关优化 |
 
-# 实验报告 
+# 实验报告 — 基于数据流分析的全局优化
 
 ## 一、实验目标与概述
 
@@ -91,7 +91,7 @@
 ## 五、构建与运行
 
 ```bash
-cd Code && make TASK=task1
-./parser_task1 input.ir output.ir
+cd Code && make
+./parser input.ir output.ir
 diff input.ir output.ir
 ```

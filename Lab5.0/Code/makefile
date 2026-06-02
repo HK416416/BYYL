@@ -1,6 +1,4 @@
-ifeq ($(TASK),)
-$(error Please specify TASK=task1, task2, or task3)
-endif
+TASK ?= task1
 
 # ========== 目录定义 ==========
 SRC_DIR        := ./src/$(TASK)
@@ -26,7 +24,7 @@ GEN_OBJS := $(addprefix $(OBJ_DIR)/, $(addsuffix .o, \
             $(basename $(notdir $(IR_LEX_YY_C) $(IR_SYNTAX_TAB_C)))))
 OBJS += $(GEN_OBJS)
 
-PARSER := ./parser_$(TASK)
+PARSER := ./parser
 
 INC_PATH := . \
             ./include \

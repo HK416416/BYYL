@@ -39,9 +39,9 @@ Lab5 — 中间代码优化
 
 ```bash
 cd Code
-make TASK=task1                              # 编译生成 parser_task1
-./parser_task1 input.ir                      # 优化并输出到 stdout
-./parser_task1 input.ir output.ir            # 优化并保存到文件
+make                                        # 编译生成 parser
+./parser input.ir                           # 优化并输出到 stdout
+./parser input.ir output.ir                 # 优化并保存到文件
 ```
 
 数据流分析框架
@@ -67,7 +67,7 @@ make TASK=task1                              # 编译生成 parser_task1
 ----
 ```bash
 cd Code
-make TASK=task1            # 编译
-make clean TASK=task1      # 清理 build 目录和可执行文件
-make run ARG=../Test/sample3_const_fold.ir TASK=task1  # 编译并运行
+make                       # 编译
+make clean                 # 清理 build 目录和可执行文件
+make run ARG=../Test/sample3_const_fold.ir  # 编译并运行
 ```
